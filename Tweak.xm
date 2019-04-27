@@ -1,15 +1,18 @@
 #import <substrate.h>
 #import <stdint.h>
 
+// Declaring our Variables that will be used throughout the program
 static NSInteger statusBarStyle, screenRoundness, appswitcherRoundness;
 static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduceRows, wantsCCGrabber, wantsOriginalButtons, wantsBottomInset, wantsRoundedCorners;
 
+// Telling the iPhone that we want the fluid gestures
 %hook BSPlatform
 - (NSInteger)homeButtonType {
 	return 2;
 }
 %end
 
+// Removing the toggles on the lock screen
 %hook SBDashBoardQuickActionsViewController	
 -(BOOL)hasFlashlight {
 	return NO;
@@ -19,6 +22,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 }
 %end
 
+// If regular status bar or iPhone X statusbar fix control center from crashing
 %hook _UIStatusBarVisualProvider_iOS
 + (Class)class {
     if(statusBarStyle == 0 || statusBarStyle == 2) {
@@ -29,6 +33,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 }
 %end
 
+// All the hooks for the iPhone X statusbar
 %group StatusBarX
 
 %hook UIStatusBar_Base
@@ -43,15 +48,16 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 @interface CCUIHeaderPocketView : UIView		
 @end		
 
+// Part of FUGap - stops the giltchy bluring effect from happening in the control center
 %hook CCUIHeaderPocketView
 -(void)setBackgroundAlpha:(double)arg1 {
     arg1 = 0.0;
     %orig;
 }
 %end
-
 %end
 
+// All the hooks for the iPad Statusbar
 %group StatusBariPad
 
 %hook UIStatusBar_Base
@@ -75,6 +81,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 }
 %end
 
+// Fixes status bar glitch after closing control center
 %hook CCUIHeaderPocketView
 - (void)layoutSubviews {
     %orig;
@@ -84,6 +91,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 }
 %end
 
+// Part of FUGap - stops the giltchy bluring effect from happening in the control center
 %hook CCUIHeaderPocketView
 -(void)setBackgroundAlpha:(double)arg1 {
     arg1 = 0.0;
@@ -103,6 +111,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 
 %group KeyboardDock
 
+// iPhone X keyboard. Automatically adjusts the sized depending if Barmoji is installed
 %hook UIKeyboardImpl
 +(UIEdgeInsets)deviceSpecificPaddingForInterfaceOrientation:(NSInteger)orientation inputMode:(id)mode {
     UIEdgeInsets orig = %orig;
@@ -115,6 +124,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 @interface UIKeyboardDockView : UIView
 @end
 
+//Moves the emoji and dictation icon on the keyboard. Automatically adjust the location depending if Barmoji is installed
 %hook UIKeyboardDockView
 - (CGRect)bounds {
     CGRect bounds = %orig;
@@ -128,6 +138,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 %end
 %end
 
+// Enables the modern dock + rounded app switcher corners
 %group roundedDock
 
 %hook UITraitCollection
@@ -137,8 +148,8 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 %end
 %end
 
+// Reduces the number of rows of icons on the home screen
 %group reduceRows
-
 %hook SBIconListView
 + (NSUInteger)maxVisibleIconRowsInterfaceOrientation:(UIInterfaceOrientation)orientation {
 	NSUInteger orig = %orig;
@@ -147,6 +158,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 %end
 %end
 
+// Adds the control center grabber on the coversheet
 %group ccGrabber
 
 @interface SBDashBoardTeachableMomentsContainerView : UIView
@@ -168,6 +180,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 %end
 %end
 
+// Allows for the regular iPhone buttons to be used.
 %group originalButtons
 
 %hook SBLockHardwareButtonActions
@@ -239,9 +252,9 @@ int applicationDidFinishLaunching;
 %end
 %end
 
+// Rounded Screen Corners for Lock and Home Screen
 %group roundedCorners
 
-@interface _UIRootWindow : UIView
 @property (setter=_setContinuousCornerRadius:, nonatomic) double _continuousCornerRadius;
 - (double)_continuousCornerRadius;
 - (void)_setContinuousCornerRadius:(double)arg1;
@@ -303,6 +316,7 @@ CFPropertyListRef new_MGCopyAnswer_internal(CFStringRef property, uint32_t *outT
 }
 %end
 
+// Preferences.
 static void loadPrefs() {
     BOOL isSystem = [NSHomeDirectory() isEqualToString:@"/var/mobile"];
     NSDictionary* globalSettings = nil;
@@ -317,17 +331,17 @@ static void loadPrefs() {
     if (!globalSettings) {
         globalSettings = [NSDictionary dictionaryWithContentsOfFile:@"/User/Library/Preferences/com.binksalex.littlexsprefs.plist"];
     }
-   	statusBarStyle = (NSInteger)[[globalSettings objectForKey:@"statusBarStyle"]?:@2 integerValue];
-  	screenRoundness = (NSInteger)[[globalSettings objectForKey:@"screenRoundness"]?:@6 integerValue];
+    statusBarStyle = (NSInteger)[[globalSettings objectForKey:@"statusBarStyle"]?:@2 integerValue];
+    screenRoundness = (NSInteger)[[globalSettings objectForKey:@"screenRoundness"]?:@6 integerValue];
     appswitcherRoundness = (NSInteger)[[globalSettings objectForKey:@"appswitcherRoundness"]?:@6 integerValue];
     wantsHomeBar = (BOOL)[[globalSettings objectForKey:@"homeBar"]?:@FALSE boolValue];
-	wantsKeyboardDock = (BOOL)[[globalSettings objectForKey:@"keyboardDock"]?:@TRUE boolValue];
+    wantsKeyboardDock = (BOOL)[[globalSettings objectForKey:@"keyboardDock"]?:@TRUE boolValue];
     wantsRoundedAppSwitcher = (BOOL)[[globalSettings objectForKey:@"roundedAppSwitcher"]?:@TRUE boolValue];
-	wantsReduceRows = (BOOL)[[globalSettings objectForKey:@"reduceRows"]?:@FALSE boolValue];
-	wantsCCGrabber = (BOOL)[[globalSettings objectForKey:@"ccGrabber"]?:@FALSE boolValue];
-	wantsOriginalButtons = (BOOL)[[globalSettings objectForKey:@"originalButtons"]?:@FALSE boolValue];
-	wantsBottomInset = (BOOL)[[globalSettings objectForKey:@"bottomInset"]?:@FALSE boolValue];
-	wantsRoundedCorners = (BOOL)[[globalSettings objectForKey:@"roundedCorners"]?:@FALSE boolValue];
+    wantsReduceRows = (BOOL)[[globalSettings objectForKey:@"reduceRows"]?:@FALSE boolValue];
+    wantsCCGrabber = (BOOL)[[globalSettings objectForKey:@"ccGrabber"]?:@FALSE boolValue];
+    wantsOriginalButtons = (BOOL)[[globalSettings objectForKey:@"originalButtons"]?:@FALSE boolValue];
+    wantsBottomInset = (BOOL)[[globalSettings objectForKey:@"bottomInset"]?:@FALSE boolValue];
+    wantsRoundedCorners = (BOOL)[[globalSettings objectForKey:@"roundedCorners"]?:@FALSE boolValue];
 }
 
 %ctor {
