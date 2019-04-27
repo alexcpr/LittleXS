@@ -12,10 +12,10 @@ All pre-X devices running iOS 11-12.
 * iPhone X CC Grabber on the lockscreen.
 * iPhone X keyboard.
 * Homebar
-* iPhone X rounded dock and switcher
+* iPhone X modern dock and rounded app switcher (adjustable)
 * iPhone X Siri & Screenshot button combination.
 * Bottom Inset
-* Rounded Corners
+* Rounded Screen Corners (adjustable)
 * Reduce Rows
 * Lightweight with no battery drain.*
 
