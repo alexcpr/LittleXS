@@ -255,6 +255,7 @@ int applicationDidFinishLaunching;
 // Rounded Screen Corners for Lock and Home Screen
 %group roundedCorners
 
+@interface _UIRootWindow : UIView
 @property (setter=_setContinuousCornerRadius:, nonatomic) double _continuousCornerRadius;
 - (double)_continuousCornerRadius;
 - (void)_setContinuousCornerRadius:(double)arg1;
@@ -270,6 +271,7 @@ int applicationDidFinishLaunching;
 %end
 %end
 
+// Adds the bottom inset to the screen.
 %group bottomInset
 extern "C" CFPropertyListRef MGCopyAnswer(CFStringRef);
 
