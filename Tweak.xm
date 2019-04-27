@@ -22,6 +22,13 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 }
 %end
 
+// Reduce reachability sensitivity.
+%hook SBReachabilitySettings
+- (void)setSystemWideSwipeDownHeight:(double) systemWideSwipeDownHeight {
+    return %orig(100);
+}
+%end
+
 // If regular status bar or iPhone X statusbar fix control center from crashing
 %hook _UIStatusBarVisualProvider_iOS
 + (Class)class {
