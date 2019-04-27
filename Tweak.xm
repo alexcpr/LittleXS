@@ -9,7 +9,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 }
 %end
 
-// Removing the toggels on the locj screen
+// Removing the toggles on the lock screen
 %hook SBDashBoardQuickActionsViewController	
 -(BOOL)hasFlashlight {
 	return NO;
@@ -121,7 +121,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 @interface UIKeyboardDockView : UIView
 @end
 
-//Moves the emjoi and dictation icon on the keyboard. Automatically adjust the location depending if Barmoji is installed
+//Moves the emoji and dictation icon on the keyboard. Automatically adjust the location depending if Barmoji is installed
 %hook UIKeyboardDockView
 - (CGRect)bounds {
     CGRect bounds = %orig;
@@ -135,7 +135,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 %end
 %end
 
-// Enables the rounded dock + app switcher
+// Enables the modern dock + rounded app switcher corners
 %group roundedDock
 
 %hook UITraitCollection
@@ -177,7 +177,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 %end
 %end
 
-// Allows for the regular iPhone buttons to be used. Could someone look into making this more efficient?
+// Allows for the regular iPhone buttons to be used.
 %group originalButtons
 
 %hook SBLockHardwareButtonActions
@@ -291,7 +291,7 @@ int applicationDidFinishLaunching;
 %end
 %end
 
-// Rounded Corners for Lock and Home Screen
+// Rounded Screen Corners for Lock and Home Screen
 %group roundedCorners
 
 @interface _UIRootWindow : UIView
@@ -310,7 +310,7 @@ int applicationDidFinishLaunching;
 %end
 %end
 
-// Prefrences.
+// Preferences.
 static void loadPrefs() {
     BOOL isSystem = [NSHomeDirectory() isEqualToString:@"/var/mobile"];
     NSDictionary* globalSettings = nil;
@@ -322,22 +322,20 @@ static void loadPrefs() {
             CFRelease(keyList);
         }
     }
-    
-    // Makes the setting variables to what you want
     if (!globalSettings) {
         globalSettings = [NSDictionary dictionaryWithContentsOfFile:@"/User/Library/Preferences/com.binksalex.littlexsprefs.plist"];
     }
-   	statusBarStyle = (NSInteger)[[globalSettings objectForKey:@"statusBarStyle"]?:@2 integerValue];
-  	screenRoundness = (NSInteger)[[globalSettings objectForKey:@"screenRoundness"]?:@6 integerValue];
+    statusBarStyle = (NSInteger)[[globalSettings objectForKey:@"statusBarStyle"]?:@2 integerValue];
+    screenRoundness = (NSInteger)[[globalSettings objectForKey:@"screenRoundness"]?:@6 integerValue];
     appswitcherRoundness = (NSInteger)[[globalSettings objectForKey:@"appswitcherRoundness"]?:@6 integerValue];
     wantsHomeBar = (BOOL)[[globalSettings objectForKey:@"homeBar"]?:@FALSE boolValue];
-	wantsKeyboardDock = (BOOL)[[globalSettings objectForKey:@"keyboardDock"]?:@TRUE boolValue];
+    wantsKeyboardDock = (BOOL)[[globalSettings objectForKey:@"keyboardDock"]?:@TRUE boolValue];
     wantsRoundedAppSwitcher = (BOOL)[[globalSettings objectForKey:@"roundedAppSwitcher"]?:@TRUE boolValue];
-	wantsReduceRows = (BOOL)[[globalSettings objectForKey:@"reduceRows"]?:@FALSE boolValue];
-	wantsCCGrabber = (BOOL)[[globalSettings objectForKey:@"ccGrabber"]?:@FALSE boolValue];
-	wantsOriginalButtons = (BOOL)[[globalSettings objectForKey:@"originalButtons"]?:@FALSE boolValue];
-	wantsBottomInset = (BOOL)[[globalSettings objectForKey:@"bottomInset"]?:@FALSE boolValue];
-	wantsRoundedCorners = (BOOL)[[globalSettings objectForKey:@"roundedCorners"]?:@FALSE boolValue];
+    wantsReduceRows = (BOOL)[[globalSettings objectForKey:@"reduceRows"]?:@FALSE boolValue];
+    wantsCCGrabber = (BOOL)[[globalSettings objectForKey:@"ccGrabber"]?:@FALSE boolValue];
+    wantsOriginalButtons = (BOOL)[[globalSettings objectForKey:@"originalButtons"]?:@FALSE boolValue];
+    wantsBottomInset = (BOOL)[[globalSettings objectForKey:@"bottomInset"]?:@FALSE boolValue];
+    wantsRoundedCorners = (BOOL)[[globalSettings objectForKey:@"roundedCorners"]?:@FALSE boolValue];
 }
 
 %ctor {
@@ -347,10 +345,10 @@ static void loadPrefs() {
     // If statments deciding what groups to run
     
 	if(statusBarStyle == 1) {
-		%init(StatusBariPad);
+	    %init(StatusBariPad);
 	} else if(statusBarStyle == 2) {
-        %init(StatusBarX);
-    }
+            %init(StatusBarX);
+	}
 
 	if(!wantsHomeBar) %init(hideHomeBar);
 
