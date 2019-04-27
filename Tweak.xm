@@ -1,3 +1,6 @@
+#import <substrate.h>
+#import <stdint.h>
+
 static NSInteger statusBarStyle, screenRoundness, appswitcherRoundness;
 static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduceRows, wantsCCGrabber, wantsOriginalButtons, wantsBottomInset, wantsRoundedCorners;
 
@@ -236,47 +239,6 @@ int applicationDidFinishLaunching;
 %end
 %end
 
-%group bottomInset
-
-%hook UITabBar
-- (void)layoutSubviews {
-    %orig;
-    CGRect _frame = self.frame;
-    if (_frame.size.height == 49) {
-		_frame.size.height = 70;
-    	_frame.origin.y = [[UIScreen mainScreen] bounds].size.height - 70;
-    }
-    self.frame = _frame;
-}
-%end
-
-%hook UIApplicationSceneSettings
-- (UIEdgeInsets)_inferredLayoutMargins {
-	return UIEdgeInsetsMake(32,0,0,0); 
-}
-- (UIEdgeInsets)safeAreaInsetsLandscapeLeft {
-    UIEdgeInsets _insets = %orig;
-    _insets.bottom = 21;
-	return _insets;
-}
-- (UIEdgeInsets)safeAreaInsetsLandscapeRight {
-    UIEdgeInsets _insets = %orig;
-    _insets.bottom = 21;
-    return _insets;
-}
-- (UIEdgeInsets)safeAreaInsetsPortrait {
-    UIEdgeInsets _insets = %orig;
-    _insets.bottom = 21;
-    return _insets;
-}
-- (UIEdgeInsets)safeAreaInsetsPortraitUpsideDown {
-    UIEdgeInsets _insets = %orig;
-    _insets.bottom = 21;
-    return _insets;
-}
-%end
-%end
-
 %group roundedCorners
 
 @interface _UIRootWindow : UIView
@@ -293,6 +255,52 @@ int applicationDidFinishLaunching;
     return;
 }
 %end
+%end
+
+%group bottomInset
+extern "C" CFPropertyListRef MGCopyAnswer(CFStringRef);
+
+typedef unsigned long long addr_t;
+
+static addr_t step64(const uint8_t *buf, addr_t start, size_t length, uint32_t what, uint32_t mask) {
+	addr_t end = start + length;
+	while (start < end) {
+		uint32_t x = *(uint32_t *)(buf + start);
+		if ((x & mask) == what) {
+			return start;
+		}
+		start += 4;
+	}
+	return 0;
+}
+
+static addr_t find_branch64(const uint8_t *buf, addr_t start, size_t length) {
+	return step64(buf, start, length, 0x14000000, 0xFC000000);
+}
+
+static addr_t follow_branch64(const uint8_t *buf, addr_t branch) {
+	long long w;
+	w = *(uint32_t *)(buf + branch) & 0x3FFFFFF;
+	w <<= 64 - 26;
+	w >>= 64 - 26 - 2;
+	return branch + w;
+}
+
+static CFPropertyListRef (*orig_MGCopyAnswer_internal)(CFStringRef property, uint32_t *outTypeCode);
+CFPropertyListRef new_MGCopyAnswer_internal(CFStringRef property, uint32_t *outTypeCode) {
+    CFPropertyListRef r = orig_MGCopyAnswer_internal(property, outTypeCode);
+	#define k(string) CFEqual(property, CFSTR(string))
+    if (k("oPeik/9e8lQWMszEjbPzng") || k("ArtworkTraits")) {
+        CFMutableDictionaryRef copy = CFDictionaryCreateMutableCopy(NULL, 0, (CFDictionaryRef)r);
+        CFRelease(r);
+        CFNumberRef num;
+        uint32_t deviceSubType = 0x984;
+        num = CFNumberCreate(NULL, kCFNumberIntType, &deviceSubType);
+        CFDictionarySetValue(copy, CFSTR("ArtworkDeviceSubType"), num);
+        return copy;
+    }
+	return r;
+}
 %end
 
 static void loadPrefs() {
@@ -323,30 +331,31 @@ static void loadPrefs() {
 }
 
 %ctor {
-
-    loadPrefs();
-    
-	if(statusBarStyle == 1) {
-		%init(StatusBariPad);
-	} else if(statusBarStyle == 2) {
-        %init(StatusBarX);
-    }
-
-	if(!wantsHomeBar) %init(hideHomeBar);
-
-	if(wantsKeyboardDock) %init(KeyboardDock);
-	
-	if(wantsRoundedAppSwitcher) %init(roundedDock);
-
-	if(wantsReduceRows) %init(reduceRows);
-
-	if(wantsCCGrabber) %init(ccGrabber);
-
-	if(wantsOriginalButtons) %init(originalButtons);
-
-	if(wantsBottomInset) %init(bottomInset);
-
-   	if(wantsRoundedCorners) %init(roundedCorners);
-
-	%init(_ungrouped);
+    @autoreleasepool {
+        loadPrefs();
+        if(statusBarStyle == 1) {
+            %init(StatusBariPad);
+        } else if(statusBarStyle == 2) {
+            %init(StatusBarX);
+        }
+        if(!wantsHomeBar) %init(hideHomeBar);
+        if(wantsKeyboardDock) %init(KeyboardDock);
+        if(wantsRoundedAppSwitcher) %init(roundedDock);
+        if(wantsReduceRows) %init(reduceRows);
+        if(wantsCCGrabber) %init(ccGrabber);
+        if(wantsOriginalButtons) %init(originalButtons);
+        if(wantsRoundedCorners) %init(roundedCorners);
+        if(wantsBottomInset) {
+            MSImageRef libGestalt = MSGetImageByName("/usr/lib/libMobileGestalt.dylib");
+            if (libGestalt) {
+                void *MGCopyAnswerFn = MSFindSymbol(libGestalt, "_MGCopyAnswer");
+                const uint8_t *MGCopyAnswer_ptr = (const uint8_t *)MGCopyAnswer;
+                addr_t branch = find_branch64(MGCopyAnswer_ptr, 0, 8);
+                addr_t branch_offset = follow_branch64(MGCopyAnswer_ptr, branch);
+                MSHookFunction(((void *)((const uint8_t *)MGCopyAnswerFn + branch_offset)), (void *)new_MGCopyAnswer_internal, (void **)&orig_MGCopyAnswer_internal);
+            }
+            %init(bottomInset);
+        }
+        %init(_ungrouped);
+	}
 }
