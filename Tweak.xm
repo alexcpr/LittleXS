@@ -1,12 +1,15 @@
+// Declaring our Variables that will be used throughout the program
 static NSInteger statusBarStyle, screenRoundness, appswitcherRoundness;
 static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduceRows, wantsCCGrabber, wantsOriginalButtons, wantsBottomInset, wantsRoundedCorners;
 
+// Telling the iPhone that we want the fluid gestures
 %hook BSPlatform
 - (NSInteger)homeButtonType {
 	return 2;
 }
 %end
 
+// Removing the toggels on the locj screen
 %hook SBDashBoardQuickActionsViewController	
 -(BOOL)hasFlashlight {
 	return NO;
@@ -16,6 +19,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 }
 %end
 
+// If regular status bar or iPhone X statusbar fix control center from crashing
 %hook _UIStatusBarVisualProvider_iOS
 + (Class)class {
     if(statusBarStyle == 0 || statusBarStyle == 2) {
@@ -26,6 +30,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 }
 %end
 
+// All the hooks for the iPhone X statusbar
 %group StatusBarX
 
 %hook UIStatusBar_Base
@@ -40,15 +45,16 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 @interface CCUIHeaderPocketView : UIView		
 @end		
 
+// Part of FUGap - stops the giltchy bluring effect from happening in the control center
 %hook CCUIHeaderPocketView
 -(void)setBackgroundAlpha:(double)arg1 {
     arg1 = 0.0;
     %orig;
 }
 %end
-
 %end
 
+// All the hooks for the iPad Statusbar
 %group StatusBariPad
 
 %hook UIStatusBar_Base
@@ -72,6 +78,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 }
 %end
 
+// Fixes status bar glitch after closing control center
 %hook CCUIHeaderPocketView
 - (void)layoutSubviews {
     %orig;
@@ -81,6 +88,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 }
 %end
 
+// Part of FUGap - stops the giltchy bluring effect from happening in the control center
 %hook CCUIHeaderPocketView
 -(void)setBackgroundAlpha:(double)arg1 {
     arg1 = 0.0;
@@ -100,6 +108,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 
 %group KeyboardDock
 
+// iPhone X keyboard. Automatically adjusts the sized depending if Barmoji is installed
 %hook UIKeyboardImpl
 +(UIEdgeInsets)deviceSpecificPaddingForInterfaceOrientation:(NSInteger)orientation inputMode:(id)mode {
     UIEdgeInsets orig = %orig;
@@ -112,6 +121,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 @interface UIKeyboardDockView : UIView
 @end
 
+//Moves the emjoi and dictation icon on the keyboard. Automatically adjust the location depending if Barmoji is installed
 %hook UIKeyboardDockView
 - (CGRect)bounds {
     CGRect bounds = %orig;
@@ -125,6 +135,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 %end
 %end
 
+// Enables the rounded dock + app switcher
 %group roundedDock
 
 %hook UITraitCollection
@@ -134,8 +145,8 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 %end
 %end
 
+// Reduces the number of rows of icons on the home screen
 %group reduceRows
-
 %hook SBIconListView
 + (NSUInteger)maxVisibleIconRowsInterfaceOrientation:(UIInterfaceOrientation)orientation {
 	NSUInteger orig = %orig;
@@ -144,6 +155,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 %end
 %end
 
+// Adds the control center grabber on the coversheet
 %group ccGrabber
 
 @interface SBDashBoardTeachableMomentsContainerView : UIView
@@ -165,6 +177,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 %end
 %end
 
+// Allows for the regular iPhone buttons to be used. Could someone look into making this more efficient?
 %group originalButtons
 
 %hook SBLockHardwareButtonActions
@@ -236,6 +249,7 @@ int applicationDidFinishLaunching;
 %end
 %end
 
+// Adds the bottom inset to the screen. 
 %group bottomInset
 
 %hook UITabBar
@@ -277,6 +291,7 @@ int applicationDidFinishLaunching;
 %end
 %end
 
+// Rounded Corners for Lock and Home Screen
 %group roundedCorners
 
 @interface _UIRootWindow : UIView
@@ -295,6 +310,7 @@ int applicationDidFinishLaunching;
 %end
 %end
 
+// Prefrences.
 static void loadPrefs() {
     BOOL isSystem = [NSHomeDirectory() isEqualToString:@"/var/mobile"];
     NSDictionary* globalSettings = nil;
@@ -306,6 +322,8 @@ static void loadPrefs() {
             CFRelease(keyList);
         }
     }
+    
+    // Makes the setting variables to what you want
     if (!globalSettings) {
         globalSettings = [NSDictionary dictionaryWithContentsOfFile:@"/User/Library/Preferences/com.binksalex.littlexsprefs.plist"];
     }
@@ -325,6 +343,8 @@ static void loadPrefs() {
 %ctor {
 
     loadPrefs();
+    
+    // If statments deciding what groups to run
     
 	if(statusBarStyle == 1) {
 		%init(StatusBariPad);
@@ -348,5 +368,6 @@ static void loadPrefs() {
 
    	if(wantsRoundedCorners) %init(roundedCorners);
 
+	// Runs everything that is not in a group
 	%init(_ungrouped);
 }
