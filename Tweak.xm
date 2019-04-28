@@ -13,6 +13,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 %end
 
 // Removing the toggles on the lock screen
+%group hideLSShorcuts
 %hook SBDashBoardQuickActionsViewController	
 -(BOOL)hasFlashlight {
 	return NO;
@@ -20,6 +21,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 -(BOOL)hasCamera {
 	return NO;
 }
+%end
 %end
 
 // Reduce reachability sensitivity.
@@ -32,7 +34,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 // If regular status bar or iPhone X statusbar fix control center from crashing
 %hook _UIStatusBarVisualProvider_iOS
 + (Class)class {
-    if(statusBarStyle == 0 || statusBarStyle == 2) {
+    if(statusBarStyle != 1) {
         return NSClassFromString(@"_UIStatusBarVisualProvider_Split58");
     } else {
         return %orig;
@@ -279,7 +281,8 @@ int applicationDidFinishLaunching;
 %end
 
 // Adds the bottom inset to the screen.
-%group bottomInset
+%group InsetX	
+
 extern "C" CFPropertyListRef MGCopyAnswer(CFStringRef);
 
 typedef unsigned long long addr_t;
@@ -325,6 +328,47 @@ CFPropertyListRef new_MGCopyAnswer_internal(CFStringRef property, uint32_t *outT
 }
 %end
 
+// Adds the bottom inset to the screen.
+%group bottomInset		
+  %hook UITabBar		
+ - (void)layoutSubviews {		
+     %orig;		
+     CGRect _frame = self.frame;		
+     if (_frame.size.height == 49) {		
+ 		_frame.size.height = 70;		
+     	_frame.origin.y = [[UIScreen mainScreen] bounds].size.height - 70;		
+     }		
+     self.frame = _frame;		
+ }		
+ %end		
+
+  %hook UIApplicationSceneSettings		
+ - (UIEdgeInsets)_inferredLayoutMargins {		
+ 	return UIEdgeInsetsMake(32,0,0,0); 		
+ }		
+ - (UIEdgeInsets)safeAreaInsetsLandscapeLeft {		
+     UIEdgeInsets _insets = %orig;		
+     _insets.bottom = 21;		
+ 	return _insets;		
+ }		
+ - (UIEdgeInsets)safeAreaInsetsLandscapeRight {		
+     UIEdgeInsets _insets = %orig;		
+     _insets.bottom = 21;		
+     return _insets;		
+ }		
+ - (UIEdgeInsets)safeAreaInsetsPortrait {		
+     UIEdgeInsets _insets = %orig;		
+     _insets.bottom = 21;		
+     return _insets;		
+ }		
+ - (UIEdgeInsets)safeAreaInsetsPortraitUpsideDown {		
+     UIEdgeInsets _insets = %orig;		
+     _insets.bottom = 21;		
+     return _insets;		
+ }		
+ %end		
+ %end
+ 
 // Preferences.
 static void loadPrefs() {
     BOOL isSystem = [NSHomeDirectory() isEqualToString:@"/var/mobile"];
@@ -345,7 +389,7 @@ static void loadPrefs() {
     appswitcherRoundness = (NSInteger)[[globalSettings objectForKey:@"appswitcherRoundness"]?:@6 integerValue];
     wantsHomeBar = (BOOL)[[globalSettings objectForKey:@"homeBar"]?:@FALSE boolValue];
     wantsKeyboardDock = (BOOL)[[globalSettings objectForKey:@"keyboardDock"]?:@TRUE boolValue];
-    wantsRoundedAppSwitcher = (BOOL)[[globalSettings objectForKey:@"roundedAppSwitcher"]?:@TRUE boolValue];
+    wantsRoundedAppSwitcher = (BOOL)[[globalSettings objectForKey:@"roundedAppSwitcher"]?:@FALSE boolValue];
     wantsReduceRows = (BOOL)[[globalSettings objectForKey:@"reduceRows"]?:@FALSE boolValue];
     wantsCCGrabber = (BOOL)[[globalSettings objectForKey:@"ccGrabber"]?:@FALSE boolValue];
     wantsOriginalButtons = (BOOL)[[globalSettings objectForKey:@"originalButtons"]?:@FALSE boolValue];
@@ -356,29 +400,38 @@ static void loadPrefs() {
 %ctor {
     @autoreleasepool {
         loadPrefs();
+        BOOL jumperCheck = [[NSFileManager defaultManager] fileExistsAtPath:@"/var/lib/dpkg/info/com.tapsharp.jumper.list"];
+        if(!jumperCheck) {
+            %init(hideLSShorcuts);
+        }
         if(statusBarStyle == 1) {
             %init(StatusBariPad);
         } else if(statusBarStyle == 2) {
             %init(StatusBarX);
-        }
+	    }
         if(!wantsHomeBar) %init(hideHomeBar);
+	    if(wantsBottomInset) {
+            if (statusBarStyle == 2) {
+                MSImageRef libGestalt = MSGetImageByName("/usr/lib/libMobileGestalt.dylib");
+                if (libGestalt) {
+                    void *MGCopyAnswerFn = MSFindSymbol(libGestalt, "_MGCopyAnswer");
+                    const uint8_t *MGCopyAnswer_ptr = (const uint8_t *)MGCopyAnswer;
+                    addr_t branch = find_branch64(MGCopyAnswer_ptr, 0, 8);
+                    addr_t branch_offset = follow_branch64(MGCopyAnswer_ptr, branch);
+                    MSHookFunction(((void *)((const uint8_t *)MGCopyAnswerFn + branch_offset)), (void *)new_MGCopyAnswer_internal, (void **)&orig_MGCopyAnswer_internal);
+                }
+                %init(InsetX);
+            } else {
+                %init(bottomInset);
+            }
+        }
         if(wantsKeyboardDock) %init(KeyboardDock);
         if(wantsRoundedAppSwitcher) %init(roundedDock);
         if(wantsReduceRows) %init(reduceRows);
         if(wantsCCGrabber) %init(ccGrabber);
         if(wantsOriginalButtons) %init(originalButtons);
         if(wantsRoundedCorners) %init(roundedCorners);
-        if(wantsBottomInset) {
-            MSImageRef libGestalt = MSGetImageByName("/usr/lib/libMobileGestalt.dylib");
-            if (libGestalt) {
-                void *MGCopyAnswerFn = MSFindSymbol(libGestalt, "_MGCopyAnswer");
-                const uint8_t *MGCopyAnswer_ptr = (const uint8_t *)MGCopyAnswer;
-                addr_t branch = find_branch64(MGCopyAnswer_ptr, 0, 8);
-                addr_t branch_offset = follow_branch64(MGCopyAnswer_ptr, branch);
-                MSHookFunction(((void *)((const uint8_t *)MGCopyAnswerFn + branch_offset)), (void *)new_MGCopyAnswer_internal, (void **)&orig_MGCopyAnswer_internal);
-            }
-            %init(bottomInset);
-        }
+
         %init(_ungrouped);
 	}
 }
