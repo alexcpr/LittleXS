@@ -2,8 +2,8 @@
 #import <stdint.h>
 
 // Declaring our Variables that will be used throughout the program
-static NSInteger statusBarStyle, screenRoundness, appswitcherRoundness;
-static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduceRows, wantsCCGrabber, wantsOriginalButtons, wantsBottomInset, wantsRoundedCorners;
+static NSInteger statusBarStyle, screenRoundness, appswitcherRoundness, bottomInsetVersion;
+static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduceRows, wantsCCGrabber, wantsOriginalButtons, wantsRoundedCorners;
 
 // Telling the iPhone that we want the fluid gestures
 %hook BSPlatform
@@ -387,13 +387,13 @@ static void loadPrefs() {
     statusBarStyle = (NSInteger)[[globalSettings objectForKey:@"statusBarStyle"]?:@2 integerValue];
     screenRoundness = (NSInteger)[[globalSettings objectForKey:@"screenRoundness"]?:@6 integerValue];
     appswitcherRoundness = (NSInteger)[[globalSettings objectForKey:@"appswitcherRoundness"]?:@6 integerValue];
+    bottomInsetVersion = (NSInteger)[[globalSettings objectForKey:@"bottomInsetVersion"]?:@0 integerValue];
     wantsHomeBar = (BOOL)[[globalSettings objectForKey:@"homeBar"]?:@FALSE boolValue];
     wantsKeyboardDock = (BOOL)[[globalSettings objectForKey:@"keyboardDock"]?:@TRUE boolValue];
     wantsRoundedAppSwitcher = (BOOL)[[globalSettings objectForKey:@"roundedAppSwitcher"]?:@FALSE boolValue];
     wantsReduceRows = (BOOL)[[globalSettings objectForKey:@"reduceRows"]?:@FALSE boolValue];
     wantsCCGrabber = (BOOL)[[globalSettings objectForKey:@"ccGrabber"]?:@FALSE boolValue];
     wantsOriginalButtons = (BOOL)[[globalSettings objectForKey:@"originalButtons"]?:@FALSE boolValue];
-    wantsBottomInset = (BOOL)[[globalSettings objectForKey:@"bottomInset"]?:@FALSE boolValue];
     wantsRoundedCorners = (BOOL)[[globalSettings objectForKey:@"roundedCorners"]?:@FALSE boolValue];
 }
 
@@ -409,29 +409,27 @@ static void loadPrefs() {
         } else if(statusBarStyle == 2) {
             %init(StatusBarX);
 	    }
-        if(!wantsHomeBar) %init(hideHomeBar);
-	    if(wantsBottomInset) {
-            if (statusBarStyle == 2) {
-                MSImageRef libGestalt = MSGetImageByName("/usr/lib/libMobileGestalt.dylib");
-                if (libGestalt) {
-                    void *MGCopyAnswerFn = MSFindSymbol(libGestalt, "_MGCopyAnswer");
-                    const uint8_t *MGCopyAnswer_ptr = (const uint8_t *)MGCopyAnswer;
-                    addr_t branch = find_branch64(MGCopyAnswer_ptr, 0, 8);
-                    addr_t branch_offset = follow_branch64(MGCopyAnswer_ptr, branch);
-                    MSHookFunction(((void *)((const uint8_t *)MGCopyAnswerFn + branch_offset)), (void *)new_MGCopyAnswer_internal, (void **)&orig_MGCopyAnswer_internal);
-                }
-                %init(InsetX);
-            } else {
-                %init(bottomInset);
+	    if(bottomInsetVersion == 2) {
+            MSImageRef libGestalt = MSGetImageByName("/usr/lib/libMobileGestalt.dylib");
+            if (libGestalt) {
+                void *MGCopyAnswerFn = MSFindSymbol(libGestalt, "_MGCopyAnswer");
+                const uint8_t *MGCopyAnswer_ptr = (const uint8_t *)MGCopyAnswer;
+                addr_t branch = find_branch64(MGCopyAnswer_ptr, 0, 8);
+                addr_t branch_offset = follow_branch64(MGCopyAnswer_ptr, branch);
+                MSHookFunction(((void *)((const uint8_t *)MGCopyAnswerFn + branch_offset)), (void *)new_MGCopyAnswer_internal, (void **)&orig_MGCopyAnswer_internal);
             }
+            %init(InsetX);
+        } else if(bottomInsetVersion == 1) {
+            %init(bottomInset);
         }
+        if(!wantsHomeBar) %init(hideHomeBar);
         if(wantsKeyboardDock) %init(KeyboardDock);
         if(wantsRoundedAppSwitcher) %init(roundedDock);
         if(wantsReduceRows) %init(reduceRows);
         if(wantsCCGrabber) %init(ccGrabber);
         if(wantsOriginalButtons) %init(originalButtons);
         if(wantsRoundedCorners) %init(roundedCorners);
-
+        
         %init(_ungrouped);
 	}
 }
