@@ -1,9 +1,8 @@
-#import <substrate.h>
-#import <stdint.h>
+#define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
 
 // Declaring our Variables that will be used throughout the program
 static NSInteger statusBarStyle, screenRoundness, appswitcherRoundness, bottomInsetVersion;
-static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduceRows, wantsCCGrabber, wantsOriginalButtons, wantsRoundedCorners;
+static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduceRows, wantsCCGrabber, wantsOriginalButtons, wantsRoundedCorners, wantsPIP, wantsProudLock, jumperCheck = NO, wantsHideSBCC;
 
 // Telling the iPhone that we want the fluid gestures
 %hook BSPlatform
@@ -12,33 +11,75 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 }
 %end
 
+@interface CCUIHeaderPocketView : UIView				
+@end
+
+// Part of FUGap - stops the giltchy bluring effect from happening in the control center
+%hook CCUIHeaderPocketView
+-(void)setBackgroundAlpha:(double)arg1 {
+    arg1 = 0.0;
+    %orig;
+}
+%end
+
+%group ForceDefaultKeyboard
+%hook UIKeyboardImpl
++(UIEdgeInsets)deviceSpecificPaddingForInterfaceOrientation:(NSInteger)orientation inputMode:(id)mode {
+    UIEdgeInsets orig = %orig;
+    orig.bottom = 0;
+    return orig;
+}
+%end
+%end
+
 // Removing the toggles on the lock screen
-%group hideLSShorcuts
 %hook SBDashBoardQuickActionsViewController	
 -(BOOL)hasFlashlight {
-	return NO;
+	return jumperCheck;
 }
 -(BOOL)hasCamera {
-	return NO;
+	return jumperCheck;
+}
+%end
+
+// Fix the status bar from glitching when using the default status bar.
+%group HideSBCC
+%hook CCUIStatusBarStyleSnapshot
+-(BOOL)isHidden {
+    return YES;
+}
+%end
+
+%hook CCUIModularControlCenterOverlayViewController
+- (void)setOverlayStatusBarHidden:(BOOL)arg1 {
+    %orig(YES);
+}
+%end
+
+%hook CCUIOverlayStatusBarPresentationProvider
+- (void)_addHeaderContentTransformAnimationToBatch:(id)arg1 transitionState:(id)arg2 {
+    %orig(nil, arg2);
+}
+%end
+
+// Fix control center from crashing
+%hook _UIStatusBarVisualProvider_iOS
++ (Class)class {
+    return NSClassFromString(@"_UIStatusBarVisualProvider_Split58");
 }
 %end
 %end
 
 // Reduce reachability sensitivity.
-%hook SBReachabilitySettings
-- (void)setSystemWideSwipeDownHeight:(double) systemWideSwipeDownHeight {
-    return %orig(100);
+%hook SBReachabilityBackgroundView
+- (double)_displayCornerRadius {
+    return 5;
 }
 %end
 
-// If regular status bar or iPhone X statusbar fix control center from crashing
-%hook _UIStatusBarVisualProvider_iOS
-+ (Class)class {
-    if(statusBarStyle != 1) {
-        return NSClassFromString(@"_UIStatusBarVisualProvider_Split58");
-    } else {
-        return %orig;
-    }
+%hook SBReachabilitySettings
+- (void)setSystemWideSwipeDownHeight:(double) systemWideSwipeDownHeight {
+    %orig(100);
 }
 %end
 
@@ -50,18 +91,32 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
     return NSClassFromString(@"UIStatusBar_Modern");
 }
 + (void)_setImplementationClass:(Class)arg1 {
-    return %orig(NSClassFromString(@"UIStatusBar_Modern"));
+    %orig(NSClassFromString(@"UIStatusBar_Modern"));
+}
++ (BOOL)forceModern {
+	return YES;
+}
++ (Class)_statusBarImplementationClass {
+	return NSClassFromString(@"UIStatusBar_Modern");
 }
 %end
 
-@interface CCUIHeaderPocketView : UIView		
-@end		
+%hook UIStatusBarWindow
++ (void)setStatusBar:(Class)arg1 {
+    %orig(NSClassFromString(@"UIStatusBar_Modern"));
+}
+%end
 
-// Part of FUGap - stops the giltchy bluring effect from happening in the control center
-%hook CCUIHeaderPocketView
--(void)setBackgroundAlpha:(double)arg1 {
-    arg1 = 0.0;
-    %orig;
+// Fix control center from crashing
+%hook _UIStatusBarVisualProvider_iOS
++ (Class)class {
+    return NSClassFromString(@"_UIStatusBarVisualProvider_Split58");
+}
+%end
+
+%hook _UIStatusBar
++ (BOOL)forceSplit {
+	return YES;
 }
 %end
 %end
@@ -80,7 +135,8 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 
 %hook _UIStatusBarVisualProvider_iOS
 + (Class)class {
-    return NSClassFromString(@"_UIStatusBarVisualProvider_Pad_ForcedCellular");
+    if(screenRoundness >= 16 && SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"12.1")) return NSClassFromString(@"_UIStatusBarVisualProvider_RoundedPad_ForcedCellular");
+    else return NSClassFromString(@"_UIStatusBarVisualProvider_Pad_ForcedCellular");
 }
 %end
 
@@ -95,16 +151,8 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 - (void)layoutSubviews {
     %orig;
     CGRect _frame = self.frame;
-    _frame.origin.y = -24;
+    _frame.origin.y = -20;
     self.frame = _frame;
-}
-%end
-
-// Part of FUGap - stops the giltchy bluring effect from happening in the control center
-%hook CCUIHeaderPocketView
--(void)setBackgroundAlpha:(double)arg1 {
-    arg1 = 0.0;
-    %orig;
 }
 %end
 %end
@@ -124,24 +172,16 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 %hook UIKeyboardImpl
 +(UIEdgeInsets)deviceSpecificPaddingForInterfaceOrientation:(NSInteger)orientation inputMode:(id)mode {
     UIEdgeInsets orig = %orig;
-    if (NSClassFromString(@"BarmojiCollectionView"))  orig.bottom = 60;
-    else  orig.bottom = 40;
+    NSClassFromString(@"BarmojiCollectionView") ? orig.bottom = 80 : orig.bottom = 40;
     return orig;
 }
 %end
-
-@interface UIKeyboardDockView : UIView
-@end
 
 //Moves the emoji and dictation icon on the keyboard. Automatically adjust the location depending if Barmoji is installed
 %hook UIKeyboardDockView
 - (CGRect)bounds {
     CGRect bounds = %orig;
-    if (NSClassFromString(@"BarmojiCollectionView")) {
-		bounds.size.height += 4;
-	} else {
-		bounds.size.height += 15;
-	}
+    NSClassFromString(@"BarmojiCollectionView") ? bounds.origin.y += 2 : bounds.size.height += 15;
     return bounds;
 }
 %end
@@ -191,7 +231,6 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 
 // Allows for the regular iPhone buttons to be used.
 %group originalButtons
-
 %hook SBLockHardwareButtonActions
 - (id)initWithHomeButtonType:(long long)arg1 proximitySensorManager:(id)arg2 {
     return %orig(1, arg2);
@@ -323,6 +362,16 @@ CFPropertyListRef new_MGCopyAnswer_internal(CFStringRef property, uint32_t *outT
         num = CFNumberCreate(NULL, kCFNumberIntType, &deviceSubType);
         CFDictionarySetValue(copy, CFSTR("ArtworkDeviceSubType"), num);
         return copy;
+    }  else if (k("8olRm6C1xqr7AJGpLRnpSw") || k("PearlIDCapability")) {
+        return (__bridge CFPropertyListRef)@YES;
+    } else if (k("JwLB44/jEB8aFDpXQ16Tuw") || k("HomeButtonType")) {
+        return (__bridge CFPropertyListRef)@2;
+    } else if (k("/YYygAofPDbhrwToVsXdeA") || k("HwModelStr")) {
+        return (__bridge CFPropertyListRef)@"D22AP";
+    } else if (k("Z/dqyWS6OZTRy10UcmUAhw") || k("marketing-name")) {
+        return (__bridge CFPropertyListRef)@"iPhone X";
+    } else if (k("h9jDsbgj7xIVeIQ8S3/X3Q") || k("ProductType")) {
+        return (__bridge CFPropertyListRef)@"iPhone10,3";
     }
 	return r;
 }
@@ -330,45 +379,119 @@ CFPropertyListRef new_MGCopyAnswer_internal(CFStringRef property, uint32_t *outT
 
 // Adds the bottom inset to the screen.
 %group bottomInset		
-  %hook UITabBar		
- - (void)layoutSubviews {		
-     %orig;		
-     CGRect _frame = self.frame;		
-     if (_frame.size.height == 49) {		
- 		_frame.size.height = 70;		
-     	_frame.origin.y = [[UIScreen mainScreen] bounds].size.height - 70;		
-     }		
-     self.frame = _frame;		
- }		
- %end		
+%hook UITabBar		
+- (void)layoutSubviews {		
+    %orig;		
+    CGRect _frame = self.frame;		
+    if (_frame.size.height == 49) {		
+        _frame.size.height = 70;		
+        _frame.origin.y = [[UIScreen mainScreen] bounds].size.height - 70;		
+    }		
+    self.frame = _frame;		
+}		
+%end		
 
-  %hook UIApplicationSceneSettings		
- - (UIEdgeInsets)_inferredLayoutMargins {		
- 	return UIEdgeInsetsMake(32,0,0,0); 		
- }		
- - (UIEdgeInsets)safeAreaInsetsLandscapeLeft {		
-     UIEdgeInsets _insets = %orig;		
-     _insets.bottom = 21;		
- 	return _insets;		
- }		
- - (UIEdgeInsets)safeAreaInsetsLandscapeRight {		
-     UIEdgeInsets _insets = %orig;		
-     _insets.bottom = 21;		
-     return _insets;		
- }		
- - (UIEdgeInsets)safeAreaInsetsPortrait {		
-     UIEdgeInsets _insets = %orig;		
-     _insets.bottom = 21;		
-     return _insets;		
- }		
- - (UIEdgeInsets)safeAreaInsetsPortraitUpsideDown {		
-     UIEdgeInsets _insets = %orig;		
-     _insets.bottom = 21;		
-     return _insets;		
+%hook UIApplicationSceneSettings		
+- (UIEdgeInsets)_inferredLayoutMargins {		
+    return UIEdgeInsetsMake(32,0,0,0); 		
+}		
+- (UIEdgeInsets)safeAreaInsetsLandscapeLeft {		
+    UIEdgeInsets _insets = %orig;		
+    _insets.bottom = 21;		
+    return _insets;		
+}		
+- (UIEdgeInsets)safeAreaInsetsLandscapeRight {		
+    UIEdgeInsets _insets = %orig;		
+    _insets.bottom = 21;		
+    return _insets;		
+}		
+- (UIEdgeInsets)safeAreaInsetsPortrait {		
+    UIEdgeInsets _insets = %orig;		
+    _insets.bottom = 21;		
+    return _insets;		
+}		
+- (UIEdgeInsets)safeAreaInsetsPortraitUpsideDown {		
+    UIEdgeInsets _insets = %orig;		
+    _insets.bottom = 21;		
+    return _insets;		
  }		
  %end		
  %end
- 
+
+%group PIP
+extern "C" Boolean MGGetBoolAnswer(CFStringRef);
+%hookf(Boolean, MGGetBoolAnswer, CFStringRef key) {
+#define keyy(key_) CFEqual(key, CFSTR(key_))
+    if (keyy("nVh/gwNpy7Jv1NOk00CMrw"))
+        return YES;
+    return %orig;
+}
+%end
+
+%group ProudLock
+extern "C" Boolean MGGetBoolAnswer(CFStringRef);
+%hookf(Boolean, MGGetBoolAnswer, CFStringRef key) {
+#define keyyy(key_) CFEqual(key, CFSTR(key_))
+    if (keyyy("z5G/N9jcMdgPm8UegLwbKg") || keyyy("IsEmulatedDevice"))
+        return YES;
+    return %orig;
+}
+
+
+#define CGRectSetY(rect, y) CGRectMake(rect.origin.x, y, rect.size.width, rect.size.height)
+static CGFloat offset = 0;
+
+%hook SBDashBoardViewController
+- (void)loadView {
+    %orig;
+    if(![[NSFileManager defaultManager] fileExistsAtPath:@"/Library/MobileSubstrate/DynamicLibraries/Jellyfish.dylib"]) {
+        CGFloat screenWidth = UIScreen.mainScreen.bounds.size.width;
+        if (screenWidth <= 320) {
+            offset = 20;
+        } else if (screenWidth <= 375) {
+            offset = 35;
+        } else {
+            offset = 28;
+        }
+    }
+}
+%end
+
+%hook SBFLockScreenDateView
+- (void)layoutSubviews {
+    %orig;
+    if(![[NSFileManager defaultManager] fileExistsAtPath:@"/Library/MobileSubstrate/DynamicLibraries/Jellyfish.dylib"]) {
+        UIView* timeView = MSHookIvar<UIView*>(self, "_timeLabel");
+        UIView* dateSubtitleView = MSHookIvar<UIView*>(self, "_dateSubtitleView");
+        UIView* customSubtitleView = MSHookIvar<UIView*>(self, "_customSubtitleView");
+        [timeView setFrame:CGRectSetY(timeView.frame, timeView.frame.origin.y + offset)];
+        [dateSubtitleView setFrame:CGRectSetY(dateSubtitleView.frame, dateSubtitleView.frame.origin.y + offset)];
+        [customSubtitleView setFrame:CGRectSetY(customSubtitleView.frame, customSubtitleView.frame.origin.y + offset)];
+    }
+}
+%end
+%end
+
+%group CameraFix
+
+@interface CAMViewfinderView : UIView
+- (UIView*)zoomControl;
+- (UIView*)bottomBar;
+@end
+
+%hook CAMViewfinderView
+- (void)layoutSubviews {
+    %orig;
+    CGRect bottomBarFrame = [[self bottomBar] frame];
+    bottomBarFrame.origin.y -= 40;
+    [[self bottomBar] setFrame:bottomBarFrame];
+    CGRect zoomControlFrame = [[self zoomControl] frame];
+    zoomControlFrame.origin.y -= 30;
+    [[self zoomControl] setFrame:zoomControlFrame];
+}
+%end
+%end
+
 // Preferences.
 static void loadPrefs() {
     BOOL isSystem = [NSHomeDirectory() isEqualToString:@"/var/mobile"];
@@ -381,9 +504,8 @@ static void loadPrefs() {
             CFRelease(keyList);
         }
     }
-    if (!globalSettings) {
+    if (!globalSettings)
         globalSettings = [NSDictionary dictionaryWithContentsOfFile:@"/User/Library/Preferences/com.binksalex.littlexsprefs.plist"];
-    }
     statusBarStyle = (NSInteger)[[globalSettings objectForKey:@"statusBarStyle"]?:@2 integerValue];
     screenRoundness = (NSInteger)[[globalSettings objectForKey:@"screenRoundness"]?:@6 integerValue];
     appswitcherRoundness = (NSInteger)[[globalSettings objectForKey:@"appswitcherRoundness"]?:@6 integerValue];
@@ -395,20 +517,19 @@ static void loadPrefs() {
     wantsCCGrabber = (BOOL)[[globalSettings objectForKey:@"ccGrabber"]?:@FALSE boolValue];
     wantsOriginalButtons = (BOOL)[[globalSettings objectForKey:@"originalButtons"]?:@FALSE boolValue];
     wantsRoundedCorners = (BOOL)[[globalSettings objectForKey:@"roundedCorners"]?:@FALSE boolValue];
+    wantsPIP = (BOOL)[[globalSettings objectForKey:@"PIP"]?:@FALSE boolValue];
+    wantsProudLock = (BOOL)[[globalSettings objectForKey:@"ProudLock"]?:@FALSE boolValue];
+    wantsHideSBCC = (BOOL)[[globalSettings objectForKey:@"HideSBCC"]?:@FALSE boolValue];
 }
 
 %ctor {
     @autoreleasepool {
         loadPrefs();
-        BOOL jumperCheck = [[NSFileManager defaultManager] fileExistsAtPath:@"/var/lib/dpkg/info/com.tapsharp.jumper.list"];
-        if(!jumperCheck) {
-            %init(hideLSShorcuts);
-        }
-        if(statusBarStyle == 1) {
-            %init(StatusBariPad);
-        } else if(statusBarStyle == 2) {
-            %init(StatusBarX);
-	    }
+       	jumperCheck = [[NSFileManager defaultManager] fileExistsAtPath:@"/var/lib/dpkg/info/com.tapsharp.jumper.list"];
+        if(statusBarStyle == 1) %init(StatusBariPad) 
+	    else if(statusBarStyle == 2) %init(StatusBarX);
+   	    else wantsHideSBCC = YES;
+	
 	    if(bottomInsetVersion == 2) {
             MSImageRef libGestalt = MSGetImageByName("/usr/lib/libMobileGestalt.dylib");
             if (libGestalt) {
@@ -419,17 +540,23 @@ static void loadPrefs() {
                 MSHookFunction(((void *)((const uint8_t *)MGCopyAnswerFn + branch_offset)), (void *)new_MGCopyAnswer_internal, (void **)&orig_MGCopyAnswer_internal);
             }
             %init(InsetX);
-        } else if(bottomInsetVersion == 1) {
-            %init(bottomInset);
-        }
-        if(!wantsHomeBar) %init(hideHomeBar);
+        } else if(bottomInsetVersion == 1) %init(bottomInset);
+        
+	    if (wantsHomeBar) %init(CameraFix);
+        else %init(hideHomeBar);
+
         if(wantsKeyboardDock) %init(KeyboardDock);
+	else if (bottomInsetVersion == 2) %init(ForceDefaultKeyboard);
+	
         if(wantsRoundedAppSwitcher) %init(roundedDock);
         if(wantsReduceRows) %init(reduceRows);
         if(wantsCCGrabber) %init(ccGrabber);
         if(wantsOriginalButtons) %init(originalButtons);
         if(wantsRoundedCorners) %init(roundedCorners);
+        if(wantsPIP) %init(PIP);
+        if(wantsProudLock) %init(ProudLock);
+        if(wantsHideSBCC && statusBarStyle != 1) %init(HideSBCC);
         
         %init(_ungrouped);
 	}
-}
+} 
