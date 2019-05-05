@@ -1,4 +1,4 @@
-# LittleXS 
+# LittleXS
 
 Make your older iPhone an X model by enabling iPhone X fluid gestures.
 
@@ -6,16 +6,18 @@ Make your older iPhone an X model by enabling iPhone X fluid gestures.
 
 All pre-X devices running iOS 11-12.
 
-## Features (All can be enabled/disabled in settings)
+## Features (All can be enabled/disabled in settings* :)
 * iPhone X fluid gestures.
 * iPhone X and iPad status bar.
-* iPhone X CC Grabber on the lockscreen.
+* iPhone X CC Grabber.
 * iPhone X keyboard.
-* Homebar
-* iPhone X modern dock and rounded app switcher (adjustable)
+* Optional Homebar
+* Padlock on Coversheet
+* Picture In Picture
+* iPhone X rounded dock, switcher and corners
 * iPhone X Siri & Screenshot button combination.
 * Bottom Inset
-* Rounded Screen Corners (adjustable)
+* Rounded Corners
 * Reduce Rows
 * Lightweight with no battery drain.*
 
@@ -38,6 +40,8 @@ Developers are free to modify and use the LittleXS source in their work in accor
 * duraidabdul | [Neptune](https://github.com/duraidabdul/Neptune)
 * NoisyFlake | [ModernDock](https://github.com/NoisyFlake/ModernDock)
 * smokin1337 | [FUGap](https://repo.packix.com/package/com.smokin1337.fugap/)
-* Tonyk7 | [MGSpoof](https://github.com/Tonyk7/MGSpoof)
+* @Tonerk7 | [MGSpoof](https://github.com/Tonyk7/MGSpoof)
+* SniperGER | [ProudLock2](https://github.com/SniperGER/ProudLock2)
+ 
 
 *Every tweak drains some battery life no matter what it is. LittleXS drains less battery than most tweaks though
