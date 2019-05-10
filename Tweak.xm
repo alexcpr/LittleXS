@@ -22,6 +22,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 }
 %end
 
+// Forces the default keyboard when the iPhone X keyboard is disabled and the new bottom inset is enabled.
 %group ForceDefaultKeyboard
 %hook UIKeyboardImpl
 +(UIEdgeInsets)deviceSpecificPaddingForInterfaceOrientation:(NSInteger)orientation inputMode:(id)mode {
@@ -32,7 +33,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 %end
 %end
 
-// Removing the toggles on the lock screen
+// Removing the toggles on the lockscreen.
 %hook SBDashBoardQuickActionsViewController	
 -(BOOL)hasFlashlight {
 	return jumperCheck;
@@ -42,7 +43,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 }
 %end
 
-// Fix the status bar from glitching when using the default status bar.
+// Fix the status bar from glitching when using the default status bar by hiding the status bar in the CC.
 %group HideSBCC
 %hook CCUIStatusBarStyleSnapshot
 -(BOOL)isHidden {
@@ -62,7 +63,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 }
 %end
 
-// Fix control center from crashing
+// Fix control center from crashing on iOS 12.
 %hook _UIStatusBarVisualProvider_iOS
 + (Class)class {
     return NSClassFromString(@"_UIStatusBarVisualProvider_Split58");
@@ -71,19 +72,13 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 %end
 
 // Reduce reachability sensitivity.
-%hook SBReachabilityBackgroundView
-- (double)_displayCornerRadius {
-    return 5;
-}
-%end
-
 %hook SBReachabilitySettings
 - (void)setSystemWideSwipeDownHeight:(double) systemWideSwipeDownHeight {
     %orig(100);
 }
 %end
 
-// All the hooks for the iPhone X statusbar
+// All the hooks for the iPhone X statusbar.
 %group StatusBarX
 
 %hook UIStatusBar_Base
@@ -107,21 +102,38 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 }
 %end
 
-// Fix control center from crashing
+%hook _UIStatusBar
++ (BOOL)forceSplit {
+	return YES;
+}
+%end
+
+// Fix control center from crashing on iOS 12.
 %hook _UIStatusBarVisualProvider_iOS
 + (Class)class {
     return NSClassFromString(@"_UIStatusBarVisualProvider_Split58");
 }
 %end
 
-%hook _UIStatusBar
-+ (BOOL)forceSplit {
-	return YES;
+// Fix status bar in YouTube.
+@interface YTHeaderContentComboView : UIView
+- (UIView*)comboView;
+- (UIView*)headerView;
+@end
+
+%hook YTHeaderContentComboView
+- (void)layoutSubviews {
+    %orig;
+        CGRect headerViewFrame = [[self headerView] frame];
+        headerViewFrame.origin.y += 20;
+        [[self headerView] setFrame:headerViewFrame];
+        [self setBackgroundColor:[[self headerView] backgroundColor]];
 }
 %end
+
 %end
 
-// All the hooks for the iPad Statusbar
+// All the hooks for the iPad statusbar.
 %group StatusBariPad
 
 %hook UIStatusBar_Base
@@ -151,14 +163,15 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 - (void)layoutSubviews {
     %orig;
     CGRect _frame = self.frame;
-    _frame.origin.y = -20;
+    if(screenRoundness >= 16 && SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"12.1")) _frame.origin.y = -20;
+    else _frame.origin.y = -24;
     self.frame = _frame;
 }
 %end
 %end
 
+// Hide the homebar
 %group hideHomeBar
-
 %hook MTLumaDodgePillView
 - (id)initWithFrame:(struct CGRect)arg1 {
 	return NULL;
@@ -166,9 +179,10 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 %end
 %end
 
+// iPhone X keyboard.
 %group KeyboardDock
 
-// iPhone X keyboard. Automatically adjusts the sized depending if Barmoji is installed
+// Automatically adjusts the sized depending if Barmoji is installed or not.
 %hook UIKeyboardImpl
 +(UIEdgeInsets)deviceSpecificPaddingForInterfaceOrientation:(NSInteger)orientation inputMode:(id)mode {
     UIEdgeInsets orig = %orig;
@@ -177,7 +191,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 }
 %end
 
-//Moves the emoji and dictation icon on the keyboard. Automatically adjust the location depending if Barmoji is installed
+// Moves the emoji and dictation icon on the keyboard. Automatically adjust the location depending if Barmoji is installed or not.
 %hook UIKeyboardDockView
 - (CGRect)bounds {
     CGRect bounds = %orig;
@@ -187,7 +201,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 %end
 %end
 
-// Enables the modern dock + rounded app switcher corners
+// Enables the rounded dock of the iPhone X + rounds up the cards of the app switcher.
 %group roundedDock
 
 %hook UITraitCollection
@@ -197,7 +211,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 %end
 %end
 
-// Reduces the number of rows of icons on the home screen
+// Reduces the number of rows of icons on the home screen by 1.
 %group reduceRows
 %hook SBIconListView
 + (NSUInteger)maxVisibleIconRowsInterfaceOrientation:(UIInterfaceOrientation)orientation {
@@ -207,7 +221,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 %end
 %end
 
-// Adds the control center grabber on the coversheet
+// Adds the control center grabber on the lockscreen.
 %group ccGrabber
 
 @interface SBDashBoardTeachableMomentsContainerView : UIView
@@ -229,7 +243,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 %end
 %end
 
-// Allows for the regular iPhone buttons to be used.
+// Allows you to use the normal iPhone button combination.
 %group originalButtons
 %hook SBLockHardwareButtonActions
 - (id)initWithHomeButtonType:(long long)arg1 proximitySensorManager:(id)arg2 {
@@ -300,7 +314,7 @@ int applicationDidFinishLaunching;
 %end
 %end
 
-// Rounded Screen Corners for Lock and Home Screen
+// System-wide rounded screen corners.
 %group roundedCorners
 
 @interface _UIRootWindow : UIView
@@ -354,7 +368,8 @@ static CFPropertyListRef (*orig_MGCopyAnswer_internal)(CFStringRef property, uin
 CFPropertyListRef new_MGCopyAnswer_internal(CFStringRef property, uint32_t *outTypeCode) {
     CFPropertyListRef r = orig_MGCopyAnswer_internal(property, outTypeCode);
 	#define k(string) CFEqual(property, CFSTR(string))
-    if (k("oPeik/9e8lQWMszEjbPzng") || k("ArtworkTraits")) {
+     NSString* bundleIdentifier = [[NSBundle mainBundle] bundleIdentifier];
+ if (k("oPeik/9e8lQWMszEjbPzng") || k("ArtworkTraits")) {
         CFMutableDictionaryRef copy = CFDictionaryCreateMutableCopy(NULL, 0, (CFDictionaryRef)r);
         CFRelease(r);
         CFNumberRef num;
@@ -362,7 +377,7 @@ CFPropertyListRef new_MGCopyAnswer_internal(CFStringRef property, uint32_t *outT
         num = CFNumberCreate(NULL, kCFNumberIntType, &deviceSubType);
         CFDictionarySetValue(copy, CFSTR("ArtworkDeviceSubType"), num);
         return copy;
-    }  else if (k("8olRm6C1xqr7AJGpLRnpSw") || k("PearlIDCapability")) {
+    }  else if ((k("8olRm6C1xqr7AJGpLRnpSw") || k("PearlIDCapability")) && [bundleIdentifier isEqualToString:@"com.apple.springboard"]) {
         return (__bridge CFPropertyListRef)@YES;
     } else if (k("JwLB44/jEB8aFDpXQ16Tuw") || k("HomeButtonType")) {
         return (__bridge CFPropertyListRef)@2;
@@ -418,6 +433,7 @@ CFPropertyListRef new_MGCopyAnswer_internal(CFStringRef property, uint32_t *outT
  %end		
  %end
 
+// Enables PiP in video player.
 %group PIP
 extern "C" Boolean MGGetBoolAnswer(CFStringRef);
 %hookf(Boolean, MGGetBoolAnswer, CFStringRef key) {
@@ -428,6 +444,7 @@ extern "C" Boolean MGGetBoolAnswer(CFStringRef);
 }
 %end
 
+// Adds the padlock to the lockscreen.
 %group ProudLock
 extern "C" Boolean MGGetBoolAnswer(CFStringRef);
 %hookf(Boolean, MGGetBoolAnswer, CFStringRef key) {
@@ -436,7 +453,6 @@ extern "C" Boolean MGGetBoolAnswer(CFStringRef);
         return YES;
     return %orig;
 }
-
 
 #define CGRectSetY(rect, y) CGRectMake(rect.origin.x, y, rect.size.width, rect.size.height)
 static CGFloat offset = 0;
@@ -472,6 +488,7 @@ static CGFloat offset = 0;
 %end
 %end
 
+// Adds a bottom inset to the camera app.
 %group CameraFix
 
 @interface CAMViewfinderView : UIView
@@ -526,10 +543,11 @@ static void loadPrefs() {
     @autoreleasepool {
         loadPrefs();
        	jumperCheck = [[NSFileManager defaultManager] fileExistsAtPath:@"/var/lib/dpkg/info/com.tapsharp.jumper.list"];
+	    
         if(statusBarStyle == 1) %init(StatusBariPad) 
 	    else if(statusBarStyle == 2) %init(StatusBarX);
    	    else wantsHideSBCC = YES;
-	
+
 	    if(bottomInsetVersion == 2) {
             MSImageRef libGestalt = MSGetImageByName("/usr/lib/libMobileGestalt.dylib");
             if (libGestalt) {
@@ -546,8 +564,7 @@ static void loadPrefs() {
         else %init(hideHomeBar);
 
         if(wantsKeyboardDock) %init(KeyboardDock);
-	else if (bottomInsetVersion == 2) %init(ForceDefaultKeyboard);
-	
+        else if (bottomInsetVersion == 2) %init(ForceDefaultKeyboard);
         if(wantsRoundedAppSwitcher) %init(roundedDock);
         if(wantsReduceRows) %init(reduceRows);
         if(wantsCCGrabber) %init(ccGrabber);
@@ -556,7 +573,7 @@ static void loadPrefs() {
         if(wantsPIP) %init(PIP);
         if(wantsProudLock) %init(ProudLock);
         if(wantsHideSBCC && statusBarStyle != 1) %init(HideSBCC);
-        
+
         %init(_ungrouped);
 	}
-} 
+}
