@@ -7,9 +7,16 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 // Telling the iPhone that we want the fluid gestures
 %hook BSPlatform
 - (NSInteger)homeButtonType {
-	return 2;
+		return 2;
+}
+- (NSString *)productType {
+    return @"iPhone10,3";
+}
+-(NSString *)productHardwareModel {
+     return @"D22AP";
 }
 %end
+
 
 @interface CCUIHeaderPocketView : UIView				
 @end
@@ -379,14 +386,8 @@ CFPropertyListRef new_MGCopyAnswer_internal(CFStringRef property, uint32_t *outT
         return copy;
     }  else if ((k("8olRm6C1xqr7AJGpLRnpSw") || k("PearlIDCapability")) && [bundleIdentifier isEqualToString:@"com.apple.springboard"]) {
         return (__bridge CFPropertyListRef)@YES;
-    } else if (k("JwLB44/jEB8aFDpXQ16Tuw") || k("HomeButtonType")) {
-        return (__bridge CFPropertyListRef)@2;
-    } else if (k("/YYygAofPDbhrwToVsXdeA") || k("HwModelStr")) {
-        return (__bridge CFPropertyListRef)@"D22AP";
-    } else if (k("Z/dqyWS6OZTRy10UcmUAhw") || k("marketing-name")) {
+    }  else if (k("Z/dqyWS6OZTRy10UcmUAhw") || k("marketing-name")) {
         return (__bridge CFPropertyListRef)@"iPhone X";
-    } else if (k("h9jDsbgj7xIVeIQ8S3/X3Q") || k("ProductType")) {
-        return (__bridge CFPropertyListRef)@"iPhone10,3";
     }
 	return r;
 }
