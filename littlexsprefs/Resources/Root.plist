@@ -232,7 +232,7 @@
 			<key>key</key>
 			<string>ProudLock</string>
 			<key>label</key>
-			<string>FaceID Icon [BETA]</string>
+			<string>FaceID Lock</string>
 		</dict>
 		<dict>
 			<key>cell</key>
