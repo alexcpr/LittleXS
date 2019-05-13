@@ -486,6 +486,40 @@ static CGFloat offset = 0;
     }
 }
 %end
+
+%hook SBUIBiometricResource
+- (id)init {
+	id r = %orig;
+	
+	MSHookIvar<BOOL>(r, "_hasMesaHardware") = NO;
+	MSHookIvar<BOOL>(r, "_hasPearlHardware") = YES;
+	
+	return r;
+}
+%end
+
+
+@interface PKGlyphView : UIView
+@end
+
+%hook PKGlyphView
+- (void)setHidden:(BOOL)arg1 {
+	if ([self.superview isKindOfClass:%c(SBUIPasscodeBiometricAuthenticationView)]) {
+		%orig(NO);
+		return;
+	}
+	
+	%orig;
+}
+
+- (BOOL)hidden {
+	if ([self.superview isKindOfClass:%c(SBUIPasscodeBiometricAuthenticationView)]) {
+		return NO;
+	}
+	
+	return %orig;
+}
+%end
 %end
 
 // Adds a bottom inset to the camera app.
