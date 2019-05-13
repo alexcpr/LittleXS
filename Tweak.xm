@@ -511,14 +511,22 @@ static CGFloat offset = 0;
 	
 	%orig;
 }
+%end
 
-- (BOOL)hidden {
-	if ([self.superview isKindOfClass:%c(SBUIPasscodeBiometricAuthenticationView)]) {
-		return NO;
-	}
-	
-	return %orig;
+%hook NCNotificationListCollectionView
+- (void)setFrame:(CGRect)frame {
+		frame = CGRectMake(frame.origin.x,frame.origin.y + 27.5,frame.size.width,frame.size.height);
+		%orig(frame);
 }
+%end
+
+%hook SBDashBoardAdjunctListView
+- (void)setFrame:(CGRect)frame {
+		frame = CGRectMake(0,frame.origin.y + 27.5,frame.size.width,frame.size.height);
+		%orig(frame);
+}
+
+
 %end
 %end
 
