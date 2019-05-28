@@ -476,7 +476,6 @@ static CGFloat offset = 0;
             offset = 28;
         }
     }
-}
 %end
 
 %hook SBFLockScreenDateView
@@ -490,7 +489,6 @@ static CGFloat offset = 0;
         [dateSubtitleView setFrame:CGRectSetY(dateSubtitleView.frame, dateSubtitleView.frame.origin.y + offset)];
         [customSubtitleView setFrame:CGRectSetY(customSubtitleView.frame, customSubtitleView.frame.origin.y + offset)];
     }
-}
 %end
 
 %hook SBUIBiometricResource
