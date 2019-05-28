@@ -1,3 +1,5 @@
+#import <substrate.h>
+
 #define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
 
 // Declaring our Variables that will be used throughout the program
@@ -8,12 +10,6 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 %hook BSPlatform
 - (NSInteger)homeButtonType {
 		return 2;
-}
-- (NSString *)productType {
-    return @"iPhone10,3";
-}
--(NSString *)productHardwareModel {
-     return @"D22AP";
 }
 %end
 
@@ -138,6 +134,17 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 }
 %end
 
+@interface IGNavigationBar : UIView
+@end
+
+%hook IGNavigationBar
+- (void)layoutSubviews {
+    %orig;
+    CGRect _frame = self.frame;
+    _frame.origin.y = 20;
+    self.frame = _frame;
+}
+%end
 %end
 
 // All the hooks for the iPad statusbar.
@@ -386,9 +393,7 @@ CFPropertyListRef new_MGCopyAnswer_internal(CFStringRef property, uint32_t *outT
         return copy;
     }  else if ((k("8olRm6C1xqr7AJGpLRnpSw") || k("PearlIDCapability")) && [bundleIdentifier isEqualToString:@"com.apple.springboard"]) {
         return (__bridge CFPropertyListRef)@YES;
-    }  else if (k("Z/dqyWS6OZTRy10UcmUAhw") || k("marketing-name")) {
-        return (__bridge CFPropertyListRef)@"iPhone X";
-    }
+    } 
 	return r;
 }
 %end
@@ -461,11 +466,11 @@ static CGFloat offset = 0;
 %hook SBDashBoardViewController
 - (void)loadView {
     %orig;
-    if(![[NSFileManager defaultManager] fileExistsAtPath:@"/Library/MobileSubstrate/DynamicLibraries/Jellyfish.dylib"]) {
+    if([[NSFileManager defaultManager] fileExistsAtPath:@"/Library/MobileSubstrate/DynamicLibraries/Jellyfish.dylib"]) return;
         CGFloat screenWidth = UIScreen.mainScreen.bounds.size.width;
-        if (screenWidth <= 320) {
+        if (screenWidth < 321) {
             offset = 20;
-        } else if (screenWidth <= 375) {
+        } else if (screenWidth < 376) {
             offset = 35;
         } else {
             offset = 28;
@@ -477,7 +482,7 @@ static CGFloat offset = 0;
 %hook SBFLockScreenDateView
 - (void)layoutSubviews {
     %orig;
-    if(![[NSFileManager defaultManager] fileExistsAtPath:@"/Library/MobileSubstrate/DynamicLibraries/Jellyfish.dylib"]) {
+     if([[NSFileManager defaultManager] fileExistsAtPath:@"/Library/MobileSubstrate/DynamicLibraries/Jellyfish.dylib"]) return;
         UIView* timeView = MSHookIvar<UIView*>(self, "_timeLabel");
         UIView* dateSubtitleView = MSHookIvar<UIView*>(self, "_dateSubtitleView");
         UIView* customSubtitleView = MSHookIvar<UIView*>(self, "_customSubtitleView");
@@ -516,14 +521,14 @@ static CGFloat offset = 0;
 
 %hook NCNotificationListCollectionView
 - (void)setFrame:(CGRect)frame {
-		frame = CGRectMake(frame.origin.x,frame.origin.y + 27.5,frame.size.width,frame.size.height);
+		frame = CGRectMake(frame.origin.x,frame.origin.y + 25,frame.size.width,frame.size.height);
 		%orig(frame);
 }
 %end
 
 %hook SBDashBoardAdjunctListView
 - (void)setFrame:(CGRect)frame {
-		frame = CGRectMake(0,frame.origin.y + 27.5,frame.size.width,frame.size.height);
+		frame = CGRectMake(0,frame.origin.y + 25,frame.size.width,frame.size.height);
 		%orig(frame);
 }
 
@@ -534,20 +539,19 @@ static CGFloat offset = 0;
 // Adds a bottom inset to the camera app.
 %group CameraFix
 
-@interface CAMViewfinderView : UIView
-- (UIView*)zoomControl;
-- (UIView*)bottomBar;
-@end
+%hook CAMBottomBar
+- (void)setFrame:(CGRect)rect {
+    CGRect newRect = rect;
+    newRect.origin.y -= 40;
+    %orig(newRect);
+}
+%end
 
-%hook CAMViewfinderView
-- (void)layoutSubviews {
-    %orig;
-    CGRect bottomBarFrame = [[self bottomBar] frame];
-    bottomBarFrame.origin.y -= 40;
-    [[self bottomBar] setFrame:bottomBarFrame];
-    CGRect zoomControlFrame = [[self zoomControl] frame];
-    zoomControlFrame.origin.y -= 30;
-    [[self zoomControl] setFrame:zoomControlFrame];
+%hook CAMZoomControl
+- (void)setFrame:(CGRect)rect {
+    CGRect newRect = rect;
+    newRect.origin.y -= 20;
+    %orig(newRect);
 }
 %end
 %end
