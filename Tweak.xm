@@ -580,7 +580,7 @@ static void loadPrefs() {
     wantsOriginalButtons = (BOOL)[[globalSettings objectForKey:@"originalButtons"]?:@FALSE boolValue];
     wantsRoundedCorners = (BOOL)[[globalSettings objectForKey:@"roundedCorners"]?:@FALSE boolValue];
     wantsPIP = (BOOL)[[globalSettings objectForKey:@"PIP"]?:@FALSE boolValue];
-    wantsProudLock = (BOOL)[[globalSettings objectForKey:@"ProudLock"]?:@FALSE boolValue];
+    wantsProudLock = (BOOL)[[globalSettings objectForKey:@"ProudLock"]?:@TRUE boolValue];
     wantsHideSBCC = (BOOL)[[globalSettings objectForKey:@"HideSBCC"]?:@FALSE boolValue];
 }
 
