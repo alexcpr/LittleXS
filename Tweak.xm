@@ -120,7 +120,6 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 
 // Fix status bar in YouTube.
 @interface YTHeaderContentComboView : UIView
-- (UIView*)comboView;
 - (UIView*)headerView;
 @end
 
@@ -467,28 +466,30 @@ static CGFloat offset = 0;
 - (void)loadView {
     %orig;
     if([[NSFileManager defaultManager] fileExistsAtPath:@"/Library/MobileSubstrate/DynamicLibraries/Jellyfish.dylib"]) return;
-        CGFloat screenWidth = UIScreen.mainScreen.bounds.size.width;
-        if (screenWidth < 321) {
-            offset = 20;
-        } else if (screenWidth < 376) {
-            offset = 35;
-        } else {
-            offset = 28;
-        }
-    }
+
+    CGFloat screenWidth = UIScreen.mainScreen.bounds.size.width;
+    if (screenWidth < 321) {
+        offset = 20;
+    } else if (screenWidth < 376) {
+        offset = 35;
+    } else if (screenWidth < 415) {
+	    offset = 28;
+	}
+}
 %end
 
 %hook SBFLockScreenDateView
 - (void)layoutSubviews {
     %orig;
-     if([[NSFileManager defaultManager] fileExistsAtPath:@"/Library/MobileSubstrate/DynamicLibraries/Jellyfish.dylib"]) return;
-        UIView* timeView = MSHookIvar<UIView*>(self, "_timeLabel");
-        UIView* dateSubtitleView = MSHookIvar<UIView*>(self, "_dateSubtitleView");
-        UIView* customSubtitleView = MSHookIvar<UIView*>(self, "_customSubtitleView");
-        [timeView setFrame:CGRectSetY(timeView.frame, timeView.frame.origin.y + offset)];
-        [dateSubtitleView setFrame:CGRectSetY(dateSubtitleView.frame, dateSubtitleView.frame.origin.y + offset)];
-        [customSubtitleView setFrame:CGRectSetY(customSubtitleView.frame, customSubtitleView.frame.origin.y + offset)];
-    }
+    if([[NSFileManager defaultManager] fileExistsAtPath:@"/Library/MobileSubstrate/DynamicLibraries/Jellyfish.dylib"]) return;
+
+    UIView* timeView = MSHookIvar<UIView*>(self, "_timeLabel");
+    UIView* dateSubtitleView = MSHookIvar<UIView*>(self, "_dateSubtitleView");
+    UIView* customSubtitleView = MSHookIvar<UIView*>(self, "_customSubtitleView");
+    [timeView setFrame:CGRectSetY(timeView.frame, timeView.frame.origin.y + offset)];
+    [dateSubtitleView setFrame:CGRectSetY(dateSubtitleView.frame, dateSubtitleView.frame.origin.y + offset)];
+    [customSubtitleView setFrame:CGRectSetY(customSubtitleView.frame, customSubtitleView.frame.origin.y + offset)];
+}
 %end
 
 %hook SBUIBiometricResource
@@ -511,8 +512,7 @@ static CGFloat offset = 0;
 	if ([self.superview isKindOfClass:%c(SBUIPasscodeBiometricAuthenticationView)]) {
 		%orig(NO);
 		return;
-	}
-	
+	}	
 	%orig;
 }
 %end
@@ -590,8 +590,8 @@ static void loadPrefs() {
        	jumperCheck = [[NSFileManager defaultManager] fileExistsAtPath:@"/var/lib/dpkg/info/com.tapsharp.jumper.list"];
 	    
         if(statusBarStyle == 1) %init(StatusBariPad) 
-	    else if(statusBarStyle == 2) %init(StatusBarX);
-   	    else wantsHideSBCC = YES;
+	else if(statusBarStyle == 2) %init(StatusBarX);
+        else wantsHideSBCC = YES;
 
 	    if(bottomInsetVersion == 2) {
             MSImageRef libGestalt = MSGetImageByName("/usr/lib/libMobileGestalt.dylib");
@@ -605,7 +605,7 @@ static void loadPrefs() {
             %init(InsetX);
         } else if(bottomInsetVersion == 1) %init(bottomInset);
         
-	    if (wantsHomeBar) %init(CameraFix);
+    	if (wantsHomeBar) %init(CameraFix);
         else %init(hideHomeBar);
 
         if(wantsKeyboardDock) %init(KeyboardDock);
