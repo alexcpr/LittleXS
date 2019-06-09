@@ -1,10 +1,8 @@
 #import <substrate.h>
 
-#define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
-
 // Declaring our Variables that will be used throughout the program
 static NSInteger statusBarStyle, screenRoundness, appswitcherRoundness, bottomInsetVersion;
-static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduceRows, wantsCCGrabber, wantsOriginalButtons, wantsRoundedCorners, wantsPIP, wantsProudLock, jumperCheck = NO, wantsHideSBCC;
+static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduceRows, wantsCCGrabber, wantsOriginalButtons, wantsRoundedCorners, wantsPIP, wantsProudLock, wantsHideSBCC;
 
 // Telling the iPhone that we want the fluid gestures
 %hook BSPlatform
@@ -39,10 +37,10 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 // Removing the toggles on the lockscreen.
 %hook SBDashBoardQuickActionsViewController	
 -(BOOL)hasFlashlight {
-	return jumperCheck;
+	return NO;
 }
 -(BOOL)hasCamera {
-	return jumperCheck;
+	return NO;
 }
 %end
 
@@ -148,6 +146,8 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 
 // All the hooks for the iPad statusbar.
 %group StatusBariPad
+
+#define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
 
 %hook UIStatusBar_Base
 + (Class)_implementationClass {
@@ -503,17 +503,10 @@ static CGFloat offset = 0;
 }
 %end
 
-
-@interface PKGlyphView : UIView
-@end
-
 %hook PKGlyphView
 - (void)setHidden:(BOOL)arg1 {
-	if ([self.superview isKindOfClass:%c(SBUIPasscodeBiometricAuthenticationView)]) {
-		%orig(NO);
+        arg1 = NO;
 		return;
-	}	
-	%orig;
 }
 %end
 
@@ -587,10 +580,9 @@ static void loadPrefs() {
 %ctor {
     @autoreleasepool {
         loadPrefs();
-       	jumperCheck = [[NSFileManager defaultManager] fileExistsAtPath:@"/var/lib/dpkg/info/com.tapsharp.jumper.list"];
-	    
+
         if(statusBarStyle == 1) %init(StatusBariPad) 
-	else if(statusBarStyle == 2) %init(StatusBarX);
+	    else if(statusBarStyle == 2) %init(StatusBarX);
         else wantsHideSBCC = YES;
 
 	    if(bottomInsetVersion == 2) {
