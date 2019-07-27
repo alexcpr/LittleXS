@@ -1,10 +1,11 @@
 #import <substrate.h>
 
 #define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
+#define CGRectSetY(rect, y) CGRectMake(rect.origin.x, y, rect.size.width, rect.size.height)
 
 // Declaring our Variables that will be used throughout the program
 static NSInteger statusBarStyle, screenRoundness, appswitcherRoundness, bottomInsetVersion;
-static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduceRows, wantsCCGrabber, wantsOriginalButtons, wantsRoundedCorners, wantsPIP, wantsProudLock, wantsHideSBCC, wantsSwipeUpToKillApps;
+static BOOL wantsHomeBarSB, wantsHomeBarLS, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduceRows, wantsCCGrabber, wantsOriginalButtons, wantsRoundedCorners, wantsPIP, wantsProudLock, wantsHideSBCC, wantsSwipeUpToKillApps, wantsLSShortcuts;
 
 // Telling the iPhone that we want the fluid gestures
 %hook BSPlatform
@@ -30,7 +31,79 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 %end
 %end
 
-// Removing the toggles on the lockscreen.
+// Add and fixes the toggles on the lockscreen.
+%group addLSShortcuts
+@interface UIView (SpringBoardAdditions)
+- (void)sb_removeAllSubviews;
+@end
+
+@interface SBDashBoardQuickActionsView : UIView
+- (void)_layoutQuickActionButtons;
+- (void)handleButtonPress:(id)arg1 ;
+@end
+
+static BOOL require3DTouch = NO;
+static BOOL settingsUpdated = NO;
+
+%hook SBDashBoardQuickActionsViewController
++ (BOOL)deviceSupportsButtons {
+	return YES;
+}
+- (BOOL)hasCamera {
+	return YES;
+}
+- (BOOL)hasFlashlight {
+	return YES;
+}
+%end
+
+%hook SBDashBoardQuickActionsView
+- (void)_layoutQuickActionButtons {
+	%orig;
+	for (UIView *subview in self.subviews) {
+		if (subview.frame.origin.x < 50) {
+			CGRect flashlight = subview.frame;
+			CGFloat flashlightOffset = subview.alpha > 0 ? (flashlight.origin.y - 90) : flashlight.origin.y;
+			flashlight = CGRectMake(46, flashlightOffset, 50, 50);
+			subview.frame = flashlight;
+			[subview sb_removeAllSubviews];
+			#pragma clang diagnostic push
+            #pragma clang diagnostic ignored "-Wunused-value"
+            [subview init];
+            #pragma clang diagnostic pop
+		} else if (subview.frame.origin.x > 100) {
+			CGFloat _screenWidth = [UIScreen mainScreen].bounds.size.width;
+			CGRect camera = subview.frame;
+			CGFloat cameraOffset = subview.alpha > 0 ? (camera.origin.y - 90) : camera.origin.y;
+			camera = CGRectMake(_screenWidth - 96, cameraOffset, 50, 50);
+			subview.frame = camera;
+			[subview sb_removeAllSubviews];
+			#pragma clang diagnostic push
+            #pragma clang diagnostic ignored "-Wunused-value"
+            [subview init];
+            #pragma clang diagnostic pop
+		}
+	}
+}
+-(void)_addOrRemoveCameraButtonIfNecessary {
+	%orig;
+	if (settingsUpdated) {
+		[self _layoutQuickActionButtons];
+		settingsUpdated = NO;
+	}
+}
+-(void)handleButtonTouchBegan:(id)arg1 {
+	if (!require3DTouch) {
+		[self handleButtonPress:arg1];
+	} else {
+		%orig(arg1);
+	}
+}
+%end
+%end
+
+// Removes the toggles on the lockscreen.
+%group removeLSShortcuts
 %hook SBDashBoardQuickActionsViewController	
 -(BOOL)hasFlashlight {
 	return NO;
@@ -38,6 +111,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 -(BOOL)hasCamera {
 	return NO;
 }
+%end
 %end
 
 // Fix the status bar from glitching when using the default status bar by hiding the status bar in the CC.
@@ -131,7 +205,7 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 %hook _UIStatusBarVisualProvider_iOS
 + (Class)class {
     if(screenRoundness >= 16 && SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"12.1")) return NSClassFromString(@"_UIStatusBarVisualProvider_RoundedPad_ForcedCellular");
-    else return NSClassFromString(@"_UIStatusBarVisualProvider_Pad_ForcedCellular");
+    return NSClassFromString(@"_UIStatusBarVisualProvider_Pad_ForcedCellular");
 }
 %end
 
@@ -143,24 +217,25 @@ static BOOL wantsHomeBar, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduc
 
 // Fixes status bar glitch after closing control center
 %hook CCUIHeaderPocketView
-- (void)layoutSubviews {
-    %orig;
-    CGRect _frame = self.frame;
-    if(screenRoundness >= 16 && SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"12.1")) _frame.origin.y = -20;
-    else _frame.origin.y = -24;
-    self.frame = _frame;
+- (void)setFrame:(CGRect)frame {
+    if(screenRoundness >= 16 && SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"12.1")) %orig(CGRectSetY(frame, -20));
+    else %orig(CGRectSetY(frame, -24));
 }
 %end
 %end
 
-// Hide the homebar
-%group hideHomeBar
+// Hide the homebar on the springboard (everywhere except lockscreen)
+%group hideHomeBarSB
 
 %hook MTLumaDodgePillView
 - (id)initWithFrame:(struct CGRect)arg1 {
 	return NULL;
 }
 %end
+%end
+
+// Hide the homebar on the lockscreen
+%group hideHomeBarLS
 
 %hook SBDashBoardTeachableMomentsContainerView
 - (void)layoutSubviews {
@@ -424,8 +499,6 @@ extern "C" Boolean MGGetBoolAnswer(CFStringRef);
 // Adds the padlock to the lockscreen.
 %group ProudLock
 
-#define CGRectSetY(rect, y) CGRectMake(rect.origin.x, y, rect.size.width, rect.size.height)
-
 #define kBiometricEventMesaMatched 		3
 #define kBiometricEventMesaSuccess 		4
 #define kBiometricEventMesaFailed 		10
@@ -453,7 +526,7 @@ extern "C" Boolean MGGetBoolAnswer(CFStringRef);
     return %orig;
 }
 
-static CGFloat offset = 0;
+CGFloat offset = 0;
 
 %hook SBDashBoardViewController
 - (void)loadView {
@@ -579,19 +652,14 @@ static CGFloat offset = 0;
 @end
 
 %hook UIStatusBar_Modern
-- (void)setFrame:(CGRect)rect {
-    CGRect newRect = rect;
-    newRect.origin.y -= 5;
-    %orig(newRect);
+- (void)setFrame:(CGRect)frame {
+    %orig(CGRectSetY(frame, -5));
 }
 %end
 
 %hook IGNavigationBar
-- (void)layoutSubviews {
-    %orig;
-    CGRect _frame = self.frame;
-    _frame.origin.y = 20;
-    self.frame = _frame;
+- (void)setFrame:(CGRect)frame {
+    %orig(CGRectSetY(frame, 20));
 }
 %end
 %end
@@ -600,10 +668,8 @@ static CGFloat offset = 0;
 %group GMapsFix
 
 %hook UIStatusBar_Modern
-- (void)setFrame:(CGRect)rect {
-    CGRect newRect = rect;
-    newRect.origin.y -= 10;
-    %orig(newRect);
+- (void)setFrame:(CGRect)frame {
+    %orig(CGRectSetY(frame, -10));
 }
 %end
 %end
@@ -612,18 +678,14 @@ static CGFloat offset = 0;
 %group YTSBFix
 
 %hook UIStatusBar_Modern
-- (void)setFrame:(CGRect)rect {
-    CGRect newRect = rect;
-    newRect.origin.y -= 7;
-    %orig(newRect);
+- (void)setFrame:(CGRect)frame {
+    %orig(CGRectSetY(frame, -7));
 }
 %end
 
 %hook YTHeaderView
-- (void)setFrame:(CGRect)rect {
-    CGRect newRect = rect;
-    newRect.size.height += 10;
-    %orig(newRect);
+- (void)setFrame:(CGRect)frame {
+    %orig(CGRectSetY(frame, frame.origin.y + 10));
 }
 %end
 %end
@@ -664,38 +726,44 @@ static CGFloat offset = 0;
 
 // Preferences.
 static void loadPrefs() {
-    BOOL isSystem = [NSHomeDirectory() isEqualToString:@"/var/mobile"];
-    NSDictionary* globalSettings = nil;
-    if(isSystem) {
-        CFArrayRef keyList = CFPreferencesCopyKeyList(CFSTR("com.binksalex.littlexsprefs"), kCFPreferencesCurrentUser, kCFPreferencesAnyHost);
-        if(keyList) {
-            globalSettings = (__bridge NSDictionary *)CFPreferencesCopyMultiple(keyList, CFSTR("com.binksalex.littlexsprefs"), kCFPreferencesCurrentUser, kCFPreferencesAnyHost);
-            if(!globalSettings) globalSettings = [NSDictionary new];
-            CFRelease(keyList);
-        }
-    }
-    if (!globalSettings)
-        globalSettings = [NSDictionary dictionaryWithContentsOfFile:@"/User/Library/Preferences/com.binksalex.littlexsprefs.plist"];
-    statusBarStyle = (NSInteger)[[globalSettings objectForKey:@"statusBarStyle"]?:@2 integerValue];
-    screenRoundness = (NSInteger)[[globalSettings objectForKey:@"screenRoundness"]?:@6 integerValue];
-    appswitcherRoundness = (NSInteger)[[globalSettings objectForKey:@"appswitcherRoundness"]?:@6 integerValue];
-    bottomInsetVersion = (NSInteger)[[globalSettings objectForKey:@"bottomInsetVersion"]?:@0 integerValue];
-    wantsHomeBar = (BOOL)[[globalSettings objectForKey:@"homeBar"]?:@FALSE boolValue];
-    wantsKeyboardDock = (BOOL)[[globalSettings objectForKey:@"keyboardDock"]?:@TRUE boolValue];
-    wantsRoundedAppSwitcher = (BOOL)[[globalSettings objectForKey:@"roundedAppSwitcher"]?:@FALSE boolValue];
-    wantsReduceRows = (BOOL)[[globalSettings objectForKey:@"reduceRows"]?:@FALSE boolValue];
-    wantsCCGrabber = (BOOL)[[globalSettings objectForKey:@"ccGrabber"]?:@FALSE boolValue];
-    wantsOriginalButtons = (BOOL)[[globalSettings objectForKey:@"originalButtons"]?:@FALSE boolValue];
-    wantsRoundedCorners = (BOOL)[[globalSettings objectForKey:@"roundedCorners"]?:@FALSE boolValue];
-    wantsPIP = (BOOL)[[globalSettings objectForKey:@"PIP"]?:@FALSE boolValue];
-    wantsProudLock = (BOOL)[[globalSettings objectForKey:@"ProudLock"]?:@FALSE boolValue];
-    wantsHideSBCC = (BOOL)[[globalSettings objectForKey:@"HideSBCC"]?:@FALSE boolValue];
-    wantsSwipeUpToKillApps = (BOOL)[[globalSettings objectForKey:@"swipeiptokillapps"]?:@FALSE boolValue];
+	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:@"/var/mobile/Library/Preferences/com.binksalex.littlexsprefs.plist"];
+	if (prefs) {
+		statusBarStyle = ( [prefs objectForKey:@"statusBarStyle"] ? [[prefs objectForKey:@"statusBarStyle"] integerValue] : 2 );
+        screenRoundness = ( [prefs objectForKey:@"screenRoundness"] ? [[prefs objectForKey:@"screenRoundness"] integerValue] : 6 );
+        appswitcherRoundness = ( [prefs objectForKey:@"appswitcherRoundness"] ? [[prefs objectForKey:@"appswitcherRoundness"] integerValue] : 6 );
+        bottomInsetVersion = ( [prefs objectForKey:@"bottomInsetVersion"] ? [[prefs objectForKey:@"bottomInsetVersion"] integerValue] : 0 );
+        wantsHomeBarSB = ( [prefs objectForKey:@"homeBarSB"] ? [[prefs objectForKey:@"homeBarSB"] boolValue] : NO );
+        wantsHomeBarLS = ( [prefs objectForKey:@"homeBarLS"] ? [[prefs objectForKey:@"homeBarLS"] boolValue] : YES );
+        wantsKeyboardDock = ( [prefs objectForKey:@"keyboardDock"] ? [[prefs objectForKey:@"keyboardDock"] boolValue] : YES );
+        wantsRoundedAppSwitcher = ( [prefs objectForKey:@"roundedAppSwitcher"] ? [[prefs objectForKey:@"roundedAppSwitcher"] boolValue] : YES );
+        wantsReduceRows = ( [prefs objectForKey:@"reduceRows"] ? [[prefs objectForKey:@"reduceRows"] boolValue] : NO );
+        wantsCCGrabber = ( [prefs objectForKey:@"ccGrabber"] ? [[prefs objectForKey:@"ccGrabber"] boolValue] : YES );
+        wantsOriginalButtons = ( [prefs objectForKey:@"originalButtons"] ? [[prefs objectForKey:@"originalButtons"] boolValue] : NO );
+        wantsRoundedCorners = ( [prefs objectForKey:@"roundedCorners"] ? [[prefs objectForKey:@"roundedCorners"] boolValue] : NO );
+        wantsPIP = ( [prefs objectForKey:@"PIP"] ? [[prefs objectForKey:@"PIP"] boolValue] : NO );
+        wantsProudLock = ( [prefs objectForKey:@"ProudLock"] ? [[prefs objectForKey:@"ProudLock"] boolValue] : NO );
+        wantsHideSBCC = ( [prefs objectForKey:@"HideSBCC"] ? [[prefs objectForKey:@"HideSBCC"] boolValue] : NO );
+        wantsSwipeUpToKillApps = ( [prefs objectForKey:@"swipeUpToKillApps"] ? [[prefs objectForKey:@"swipeUpToKillApps"] boolValue] : NO );
+        wantsLSShortcuts = ( [prefs objectForKey:@"lsShortcutsEnabled"] ? [[prefs objectForKey:@"lsShortcutsEnabled"] boolValue] : YES );
+        require3DTouch = ( [prefs objectForKey:@"lsShortcuts3DTouch"] ? [[prefs objectForKey:@"lsShortcuts3DTouch"] boolValue] : NO );
+		settingsUpdated = YES;
+	}
+}
+
+static void initPrefs() {
+	NSString *path = @"/User/Library/Preferences/com.binksalex.littlexsprefs.plist";
+	NSString *pathDefault = @"/Library/PreferenceBundles/littlexsprefs.bundle/defaults.plist";
+	NSFileManager *fileManager = [NSFileManager defaultManager];
+	if (![fileManager fileExistsAtPath:path]) {
+		[fileManager copyItemAtPath:pathDefault toPath:path error:nil];
+	}
 }
 
 %ctor {
     @autoreleasepool {
-        loadPrefs();
+	    CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)loadPrefs, CFSTR("com.binksalex.littlexsprefs/prefsupdated"), NULL, CFNotificationSuspensionBehaviorCoalesce);
+	    initPrefs();
+	    loadPrefs();
         if(statusBarStyle == 1) %init(StatusBariPad) 
 	    else if(statusBarStyle == 2) {
             %init(StatusBarX);
@@ -718,9 +786,10 @@ static void loadPrefs() {
             %init(InsetX);
         } else if(bottomInsetVersion == 1) %init(bottomInset);
         
-        if(!wantsHomeBar) %init(hideHomeBar);
+        if(!wantsHomeBarSB) %init(hideHomeBarSB);
+        if(!wantsHomeBarLS) %init(hideHomeBarLS);
 
-        if(wantsHomeBar || bottomInsetVersion > 0) {
+        if(wantsHomeBarSB || bottomInsetVersion > 0) {
             NSString* bundleIdentifier = [[NSBundle mainBundle] bundleIdentifier];
             if([bundleIdentifier isEqualToString:@"com.apple.camera"]) %init(CameraFix);
             //else if([bundleIdentifier isEqualToString:@"com.google.ios.youtube"]) %init(YTBBFix);
@@ -735,10 +804,16 @@ static void loadPrefs() {
         if(wantsOriginalButtons) %init(originalButtons);
         if(wantsRoundedCorners) %init(roundedCorners);
         if(wantsPIP) %init(PIP);
-        if(wantsProudLock && SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"12.0")) %init(ProudLock);
         if(wantsHideSBCC && statusBarStyle != 1) %init(HideSBCC);
-        if(wantsSwipeUpToKillApps && !SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"12.0")) %init(SwipeUpToKillApps);
+        if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"12.0")) {
+            if(wantsProudLock) %init(ProudLock);
+        } else {
+            if(wantsSwipeUpToKillApps) %init(SwipeUpToKillApps);
+        }
+
+        if(wantsLSShortcuts) %init(addLSShortcuts);
+        else %init(removeLSShortcuts);
 
         %init(_ungrouped);
-	}
+    }
 }

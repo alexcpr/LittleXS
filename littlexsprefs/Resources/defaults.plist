@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>HideSBCC</key>
+	<false/>
+	<key>PIP</key>
+	<false/>
+	<key>ProudLock</key>
+	<false/>
+	<key>bottomInsetVersion</key>
+	<integer>0</integer>
+	<key>ccGrabber</key>
+	<true/>
+	<key>homeBarLS</key>
+	<true/>
+	<key>homeBarSB</key>
+	<false/>
+	<key>keyboardDock</key>
+	<true/>
+	<key>originalButtons</key>
+	<false/>
+	<key>reduceRows</key>
+	<false/>
+	<key>roundedAppSwitcher</key>
+	<true/>
+	<key>roundedCorners</key>
+	<false/>
+	<key>statusBarStyle</key>
+	<integer>2</integer>
+	<key>swipeUpToKillApps</key>
+	<false/>
+	<key>lsShortcutsEnabled</key>
+	<true/>
+	<key>lsShortcuts3DTouch</key>
+	<false/>
+</dict>
+</plist>

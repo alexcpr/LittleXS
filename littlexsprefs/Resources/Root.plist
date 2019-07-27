@@ -37,6 +37,8 @@
 				<string>iPad Status Bar</string>
 				<string>iPhone X Status Bar</string>
 			</array>
+			<key>PostNotification</key>
+			<string>com.binksalex.littlexsprefs/prefsupdated</string>
 		</dict>
 		<dict>
 			<key>cell</key>
@@ -46,9 +48,25 @@
 			<key>defaults</key>
 			<string>com.binksalex.littlexsprefs</string>
 			<key>key</key>
-			<string>homeBar</string>
+			<string>homeBarSB</string>
 			<key>label</key>
-			<string>Home Bar</string>
+			<string>Home Bar (SpringBoard)</string>
+			<key>PostNotification</key>
+			<string>com.binksalex.littlexsprefs/prefsupdated</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.binksalex.littlexsprefs</string>
+			<key>key</key>
+			<string>homeBarLS</string>
+			<key>label</key>
+			<string>Home Bar (LockScreen)</string>
+			<key>PostNotification</key>
+			<string>com.binksalex.littlexsprefs/prefsupdated</string>
 		</dict>
 		<dict>
 			<key>cell</key>
@@ -61,18 +79,22 @@
 			<string>keyboardDock</string>
 			<key>label</key>
 			<string>Larger Keyboard</string>
+			<key>PostNotification</key>
+			<string>com.binksalex.littlexsprefs/prefsupdated</string>
 		</dict>
 		<dict>
 			<key>cell</key>
 			<string>PSSwitchCell</string>
 			<key>default</key>
-			<false/>
+			<true/>
 			<key>defaults</key>
 			<string>com.binksalex.littlexsprefs</string>
 			<key>key</key>
 			<string>roundedAppSwitcher</string>
 			<key>label</key>
 			<string>Rounded App Switcher + X Dock</string>
+			<key>PostNotification</key>
+			<string>com.binksalex.littlexsprefs/prefsupdated</string>
 		</dict>
         <dict>
 			<key>cell</key>
@@ -84,7 +106,7 @@
             <key>leftImage</key>
 			<string/>
 			<key>max</key>
-			<real>40</real>
+			<real>30</real>
 			<key>min</key>
 			<real>1</real>
 			<key>rightImage</key>
@@ -95,6 +117,8 @@
 			<string>com.binksalex.littlexsprefs</string>
 			<key>key</key>
 			<string>appswitcherRoundness</string>
+			<key>PostNotification</key>
+			<string>com.binksalex.littlexsprefs/prefsupdated</string>
 		</dict>
 		<dict>
 			<key>cell</key>
@@ -107,6 +131,8 @@
 			<string>reduceRows</string>
 			<key>label</key>
 			<string>Reduce Icon Rows by 1</string>
+			<key>PostNotification</key>
+			<string>com.binksalex.littlexsprefs/prefsupdated</string>
 		</dict>
 		<dict>
 			<key>cell</key>
@@ -119,6 +145,8 @@
 			<string>originalButtons</string>
 			<key>label</key>
 			<string>Original buttons combination</string>
+			<key>PostNotification</key>
+			<string>com.binksalex.littlexsprefs/prefsupdated</string>
 		</dict>
 		<dict>
 			<key>cell</key>
@@ -145,6 +173,8 @@
 				<string>Old bottom inset</string>
 				<string>New bottom inset</string>
 			</array>
+			<key>PostNotification</key>
+			<string>com.binksalex.littlexsprefs/prefsupdated</string>
 		</dict>
 		<dict>
 			<key>cell</key>
@@ -157,6 +187,8 @@
 			<string>roundedCorners</string>
 			<key>label</key>
 			<string>Rounded Screen Corners</string>
+			<key>PostNotification</key>
+			<string>com.binksalex.littlexsprefs/prefsupdated</string>
 		</dict>
         <dict>
 			<key>cell</key>
@@ -179,6 +211,8 @@
 			<string>com.binksalex.littlexsprefs</string>
 			<key>key</key>
 			<string>screenRoundness</string>
+			<key>PostNotification</key>
+			<string>com.binksalex.littlexsprefs/prefsupdated</string>
 		</dict>
 		<dict>
 			<key>cell</key>
@@ -190,13 +224,15 @@
 			<key>cell</key>
 			<string>PSSwitchCell</string>
 			<key>default</key>
-			<false/>
+			<true/>
 			<key>defaults</key>
 			<string>com.binksalex.littlexsprefs</string>
 			<key>key</key>
 			<string>ccGrabber</string>
 			<key>label</key>
 			<string>CC Grabber</string>
+			<key>PostNotification</key>
+			<string>com.binksalex.littlexsprefs/prefsupdated</string>
 		</dict>
 		<dict>
 			<key>cell</key>
@@ -209,6 +245,8 @@
 			<string>HideSBCC</string>
 			<key>label</key>
 			<string>Hide Status Bar in Control Center</string>
+			<key>PostNotification</key>
+			<string>com.binksalex.littlexsprefs/prefsupdated</string>
 		</dict>
 		<dict>
 			<key>cell</key>
@@ -221,6 +259,8 @@
 			<string>PIP</string>
 			<key>label</key>
 			<string>Picture In Picture</string>
+			<key>PostNotification</key>
+			<string>com.binksalex.littlexsprefs/prefsupdated</string>
 		</dict>
 		<dict>
 			<key>cell</key>
@@ -232,7 +272,57 @@
 			<key>key</key>
 			<string>ProudLock</string>
 			<key>label</key>
-			<string>FaceID Lock</string>
+			<string>FaceID Icon (iOS 12+)</string>
+			<key>PostNotification</key>
+			<string>com.binksalex.littlexsprefs/prefsupdated</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<false/>
+			<key>defaults</key>
+			<string>com.binksalex.littlexsprefs</string>
+			<key>key</key>
+			<string>swipeUpToKillApps</string>
+			<key>label</key>
+			<string>Swipe Up to Kill Apps (iOS 11)</string>
+			<key>PostNotification</key>
+			<string>com.binksalex.littlexsprefs/prefsupdated</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Lockscreen Shortcuts</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.binksalex.littlexsprefs</string>
+			<key>key</key>
+			<string>lsShortcutsEnabled</string>
+			<key>label</key>
+			<string>Enabled</string>
+			<key>PostNotification</key>
+			<string>com.binksalex.littlexsprefs/prefsupdated</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<false/>
+			<key>defaults</key>
+			<string>com.binksalex.littlexsprefs</string>
+			<key>key</key>
+			<string>lsShortcuts3DTouch</string>
+			<key>label</key>
+			<string>Require 3D touch</string>
+			<key>PostNotification</key>
+			<string>com.binksalex.littlexsprefs/prefsupdated</string>
 		</dict>
 		<dict>
 			<key>cell</key>
