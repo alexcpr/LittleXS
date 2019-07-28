@@ -258,7 +258,7 @@ static BOOL settingsUpdated = NO;
 %hook UIKeyboardDockView
 - (CGRect)bounds {
     CGRect bounds = %orig;
-    NSClassFromString(@"BarmojiCollectionView") ? bounds.origin.y += 2 : bounds.size.height += 15;
+    NSClassFromString(@"BarmojiCollectionView") ? bounds.origin.y = 2 : bounds.size.height += 15;
     return bounds;
 }
 %end
