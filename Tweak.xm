@@ -64,8 +64,7 @@ static BOOL settingsUpdated = NO;
 		if (subview.frame.origin.x < 50) {
 			CGRect flashlight = subview.frame;
 			CGFloat flashlightOffset = subview.alpha > 0 ? (flashlight.origin.y - 90) : flashlight.origin.y;
-			flashlight = CGRectMake(46, flashlightOffset, 50, 50);
-			subview.frame = flashlight;
+			subview.frame = CGRectMake(46, flashlightOffset, 50, 50);
 			[subview sb_removeAllSubviews];
 			#pragma clang diagnostic push
             #pragma clang diagnostic ignored "-Wunused-value"
@@ -75,8 +74,7 @@ static BOOL settingsUpdated = NO;
 			CGFloat _screenWidth = [UIScreen mainScreen].bounds.size.width;
 			CGRect camera = subview.frame;
 			CGFloat cameraOffset = subview.alpha > 0 ? (camera.origin.y - 90) : camera.origin.y;
-			camera = CGRectMake(_screenWidth - 96, cameraOffset, 50, 50);
-			subview.frame = camera;
+			subview.frame = CGRectMake(_screenWidth - 96, cameraOffset, 50, 50);
 			[subview sb_removeAllSubviews];
 			#pragma clang diagnostic push
             #pragma clang diagnostic ignored "-Wunused-value"
@@ -658,8 +656,11 @@ CGFloat offset = 0;
 %end
 
 %hook IGNavigationBar
-- (void)setFrame:(CGRect)frame {
-    %orig(CGRectSetY(frame, 20));
+- (void)layoutSubviews {
+    %orig;
+    CGRect _frame = self.frame;
+    _frame.origin.y = 20;
+    self.frame = _frame;
 }
 %end
 %end
