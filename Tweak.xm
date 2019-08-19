@@ -4,15 +4,8 @@
 #define CGRectSetY(rect, y) CGRectMake(rect.origin.x, y, rect.size.width, rect.size.height)
 
 // Declaring our Variables that will be used throughout the program
-static NSInteger statusBarStyle, screenRoundness, appswitcherRoundness, bottomInsetVersion;
-static BOOL wantsHomeBarSB, wantsHomeBarLS, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduceRows, wantsCCGrabber, wantsOriginalButtons, wantsRoundedCorners, wantsPIP, wantsProudLock, wantsHideSBCC, wantsSwipeUpToKillApps, wantsLSShortcuts;
-
-// Telling the iPhone that we want the fluid gestures
-%hook BSPlatform
-- (NSInteger)homeButtonType {
-	return 2;
-}
-%end
+static NSInteger statusBarStyle, screenRoundness, appswitcherRoundness;
+static BOOL wantsHomeBarSB, wantsHomeBarLS, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduceRows, wantsCCGrabber, wantsOriginalButtons, wantsRoundedCorners, wantsPIP, wantsProudLock, wantsHideSBCC, wantsSwipeUpToKillApps, wantsLSShortcuts, wantsbottomInset, wantsFaceIDIcon;
 
 @interface SBDashBoardTeachableMomentsContainerView : UIView
 @property(retain, nonatomic) UIView *homeAffordanceContainerView;
@@ -31,6 +24,18 @@ static BOOL wantsHomeBarSB, wantsHomeBarLS, wantsKeyboardDock, wantsRoundedAppSw
 %end
 %end
 
+%hook SBDashBoardQuickActionsViewController
++ (BOOL)deviceSupportsButtons {
+	return wantsLSShortcuts;
+}
+- (BOOL)hasCamera {
+	return wantsLSShortcuts;
+}
+- (BOOL)hasFlashlight {
+	return wantsLSShortcuts;
+}
+%end
+
 // Add and fixes the toggles on the lockscreen.
 %group addLSShortcuts
 @interface UIView (SpringBoardAdditions)
@@ -45,18 +50,6 @@ static BOOL wantsHomeBarSB, wantsHomeBarLS, wantsKeyboardDock, wantsRoundedAppSw
 static BOOL require3DTouch = NO;
 static BOOL settingsUpdated = NO;
 
-%hook SBDashBoardQuickActionsViewController
-+ (BOOL)deviceSupportsButtons {
-	return YES;
-}
-- (BOOL)hasCamera {
-	return YES;
-}
-- (BOOL)hasFlashlight {
-	return YES;
-}
-%end
-
 %hook SBDashBoardQuickActionsView
 - (void)_layoutQuickActionButtons {
 	%orig;
@@ -65,22 +58,15 @@ static BOOL settingsUpdated = NO;
 			CGRect flashlight = subview.frame;
 			CGFloat flashlightOffset = subview.alpha > 0 ? (flashlight.origin.y - 90) : flashlight.origin.y;
 			subview.frame = CGRectMake(46, flashlightOffset, 50, 50);
-			[subview sb_removeAllSubviews];
-			#pragma clang diagnostic push
-            #pragma clang diagnostic ignored "-Wunused-value"
-            [subview init];
-            #pragma clang diagnostic pop
-		} else if (subview.frame.origin.x > 100) {
+		} else {
 			CGFloat _screenWidth = [UIScreen mainScreen].bounds.size.width;
 			CGRect camera = subview.frame;
 			CGFloat cameraOffset = subview.alpha > 0 ? (camera.origin.y - 90) : camera.origin.y;
 			subview.frame = CGRectMake(_screenWidth - 96, cameraOffset, 50, 50);
-			[subview sb_removeAllSubviews];
-			#pragma clang diagnostic push
-            #pragma clang diagnostic ignored "-Wunused-value"
-            [subview init];
-            #pragma clang diagnostic pop
 		}
+        [subview sb_removeAllSubviews];
+        #pragma clang diagnostic ignored "-Wunused-value"
+        [subview init];
 	}
 }
 -(void)_addOrRemoveCameraButtonIfNecessary {
@@ -91,23 +77,7 @@ static BOOL settingsUpdated = NO;
 	}
 }
 -(void)handleButtonTouchBegan:(id)arg1 {
-	if (!require3DTouch) {
-		[self handleButtonPress:arg1];
-	} else {
-		%orig(arg1);
-	}
-}
-%end
-%end
-
-// Removes the toggles on the lockscreen.
-%group removeLSShortcuts
-%hook SBDashBoardQuickActionsViewController	
--(BOOL)hasFlashlight {
-	return NO;
-}
--(BOOL)hasCamera {
-	return NO;
+	require3DTouch ? %orig(arg1) : [self handleButtonPress:arg1];  
 }
 %end
 %end
@@ -426,8 +396,7 @@ static CFPropertyListRef (*orig_MGCopyAnswer_internal)(CFStringRef property, uin
 CFPropertyListRef new_MGCopyAnswer_internal(CFStringRef property, uint32_t *outTypeCode) {
     CFPropertyListRef r = orig_MGCopyAnswer_internal(property, outTypeCode);
 	#define k(string) CFEqual(property, CFSTR(string))
-     NSString* bundleIdentifier = [[NSBundle mainBundle] bundleIdentifier];
- if (k("oPeik/9e8lQWMszEjbPzng") || k("ArtworkTraits")) {
+    if (k("oPeik/9e8lQWMszEjbPzng") || k("ArtworkTraits")) {
         CFMutableDictionaryRef copy = CFDictionaryCreateMutableCopy(NULL, 0, (CFDictionaryRef)r);
         CFRelease(r);
         CFNumberRef num;
@@ -435,53 +404,21 @@ CFPropertyListRef new_MGCopyAnswer_internal(CFStringRef property, uint32_t *outT
         num = CFNumberCreate(NULL, kCFNumberIntType, &deviceSubType);
         CFDictionarySetValue(copy, CFSTR("ArtworkDeviceSubType"), num);
         return copy;
-    }  else if ((k("8olRm6C1xqr7AJGpLRnpSw") || k("PearlIDCapability")) && [bundleIdentifier isEqualToString:@"com.apple.springboard"]) {
-        return (__bridge CFPropertyListRef)@YES;
     }
 	return r;
 }
 %end
 
-// Adds the bottom inset to the screen.
-%group bottomInset		
-%hook UITabBar		
-- (void)layoutSubviews {		
-    %orig;		
-    CGRect _frame = self.frame;		
-    if (_frame.size.height == 49) {		
-        _frame.size.height = 70;		
-        _frame.origin.y = [[UIScreen mainScreen] bounds].size.height - 70;		
-    }		
-    self.frame = _frame;		
-}		
-%end		
-
-%hook UIApplicationSceneSettings		
-- (UIEdgeInsets)_inferredLayoutMargins {		
-    return UIEdgeInsetsMake(32,0,0,0); 		
-}		
-- (UIEdgeInsets)safeAreaInsetsLandscapeLeft {		
-    UIEdgeInsets _insets = %orig;		
-    _insets.bottom = 21;		
-    return _insets;		
-}		
-- (UIEdgeInsets)safeAreaInsetsLandscapeRight {		
-    UIEdgeInsets _insets = %orig;		
-    _insets.bottom = 21;		
-    return _insets;		
-}		
-- (UIEdgeInsets)safeAreaInsetsPortrait {		
-    UIEdgeInsets _insets = %orig;		
-    _insets.bottom = 21;		
-    return _insets;		
-}		
-- (UIEdgeInsets)safeAreaInsetsPortraitUpsideDown {		
-    UIEdgeInsets _insets = %orig;		
-    _insets.bottom = 21;		
-    return _insets;		
- }		
- %end		
- %end
+// Remove the bottom inset.
+%group removeinset		
+%hook UIWindow
+-(UIEdgeInsets)safeAreaInsets {
+    UIEdgeInsets oldInsets = %orig;
+    UIEdgeInsets newInsets = UIEdgeInsetsMake(oldInsets.top,oldInsets.left,0.0,oldInsets.right);
+    return newInsets;
+}
+%end	
+%end 
 
 // Enables PiP in video player.
 %group PIP
@@ -528,7 +465,7 @@ CGFloat offset = 0;
 
 %hook SBDashBoardViewController
 - (void)loadView {
-	if (%c(JPWeatherManager) != nil) {
+    if (%c(JPWeatherManager) != nil) {
 		%orig;
 		return;
 	}
@@ -554,16 +491,6 @@ CGFloat offset = 0;
 			});
 		}
 	}
-}
-%end
-
-%hook SBUIProudLockIconView
-- (void)setFrame:(CGRect)frame {
-	if (!%c(NotchWindow)) {
-		%orig;
-		return;
-	}
-	%orig(CGRectSetY(frame, frame.origin.y + offset));
 }
 %end
 
@@ -594,18 +521,8 @@ CGFloat offset = 0;
 
 %hook PKGlyphView
 - (void)setHidden:(BOOL)arg1 {
-	if ([self.superview isKindOfClass:%c(SBUIPasscodeBiometricAuthenticationView)]) {
-		%orig(NO);
+		arg1 = NO;
 		return;
-	}
-	%orig;
-}
-
-- (BOOL)hidden {
-	if ([self.superview isKindOfClass:%c(SBUIPasscodeBiometricAuthenticationView)]) {
-		return NO;
-	}
-	return %orig;
 }
 %end
 
@@ -692,21 +609,44 @@ CGFloat offset = 0;
 %end
 
 // Fix bottom bar in YouTube.
-/*%group YTBBFix
+%group YTBBFix
 
-@interface YTAppView : UIView
-- (UIView*)pivotBarView;
-@end
+BOOL isClassInHierarchy(Class cls)
+{
+    __block __weak BOOL (^weak_recursiveSearch)(UIView*, Class);
+    BOOL (^recursiveSearch)(UIView*, Class);
+    weak_recursiveSearch = recursiveSearch = ^(UIView* v, Class c){
+        if ([v isKindOfClass:c])
+            return YES;
+        for (UIView* subV in v.subviews)
+        {
+            if (weak_recursiveSearch(subV, c))
+                return YES;
+        }
+        return NO;
+    };
+    for (UIWindow* w in [UIApplication sharedApplication].windows)
+    {
+        if (recursiveSearch(w, cls))
+            return YES;
+    }
+    return NO;
+}
 
-%hook YTAppView
-- (void)layoutSubviews {
-    %orig;
-    CGRect pivotBarViewFrame = [[self pivotBarView] frame];
-    pivotBarViewFrame.origin.y -= 21;
-    [[self pivotBarView] setFrame:pivotBarViewFrame];
+%hook YTPivotBarView
+- (void)setFrame:(CGRect)frame {
+    if(!isClassInHierarchy(%c(YTNGWatchCollectionView))) {
+        %orig(CGRectSetY(frame, frame.origin.y - 21));
+    }
 }
 %end
-%end*/
+
+%hook YTNGWatchLayerView
+- (void)setFrame:(CGRect)frame {
+    %orig(CGRectSetY(frame, -21));
+}
+%end
+%end
 
 // Swipe up to kill apps on iOS 11.
 %group SwipeUpToKillApps
@@ -725,6 +665,18 @@ CGFloat offset = 0;
 %end
 %end
 
+// Changes Touch ID icon to FaceID icon on the lockscreen.
+%group FaceIDIcon
+extern "C" Boolean MGGetBoolAnswer(CFStringRef);
+%hookf(Boolean, MGGetBoolAnswer, CFStringRef key) {
+#define keyyyy(key_) CFEqual(key, CFSTR(key_))
+    NSString* bundleIdentifier = [[NSBundle mainBundle] bundleIdentifier];
+    if ((keyyyy("8olRm6C1xqr7AJGpLRnpSw") || keyyyy("PearlIDCapability")) && [bundleIdentifier isEqualToString:@"com.apple.springboard"])
+        return YES;
+    return %orig;
+}
+%end
+
 // Preferences.
 static void loadPrefs() {
 	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:@"/var/mobile/Library/Preferences/com.binksalex.littlexsprefs.plist"];
@@ -732,7 +684,7 @@ static void loadPrefs() {
 		statusBarStyle = ( [prefs objectForKey:@"statusBarStyle"] ? [[prefs objectForKey:@"statusBarStyle"] integerValue] : 2 );
         screenRoundness = ( [prefs objectForKey:@"screenRoundness"] ? [[prefs objectForKey:@"screenRoundness"] integerValue] : 6 );
         appswitcherRoundness = ( [prefs objectForKey:@"appswitcherRoundness"] ? [[prefs objectForKey:@"appswitcherRoundness"] integerValue] : 6 );
-        bottomInsetVersion = ( [prefs objectForKey:@"bottomInsetVersion"] ? [[prefs objectForKey:@"bottomInsetVersion"] integerValue] : 0 );
+        wantsbottomInset = ( [prefs objectForKey:@"BottomInset"] ? [[prefs objectForKey:@"BottomInset"] boolValue] : NO );
         wantsHomeBarSB = ( [prefs objectForKey:@"homeBarSB"] ? [[prefs objectForKey:@"homeBarSB"] boolValue] : NO );
         wantsHomeBarLS = ( [prefs objectForKey:@"homeBarLS"] ? [[prefs objectForKey:@"homeBarLS"] boolValue] : YES );
         wantsKeyboardDock = ( [prefs objectForKey:@"keyboardDock"] ? [[prefs objectForKey:@"keyboardDock"] boolValue] : YES );
@@ -747,6 +699,7 @@ static void loadPrefs() {
         wantsSwipeUpToKillApps = ( [prefs objectForKey:@"swipeUpToKillApps"] ? [[prefs objectForKey:@"swipeUpToKillApps"] boolValue] : NO );
         wantsLSShortcuts = ( [prefs objectForKey:@"lsShortcutsEnabled"] ? [[prefs objectForKey:@"lsShortcutsEnabled"] boolValue] : YES );
         require3DTouch = ( [prefs objectForKey:@"lsShortcuts3DTouch"] ? [[prefs objectForKey:@"lsShortcuts3DTouch"] boolValue] : NO );
+        wantsFaceIDIcon = ( [prefs objectForKey:@"FaceIDIcon"] ? [[prefs objectForKey:@"FaceIDIcon"] boolValue] : NO );
 		settingsUpdated = YES;
 	}
 }
@@ -775,29 +728,29 @@ static void initPrefs() {
         }
         else wantsHideSBCC = YES;
 	
-	    if(bottomInsetVersion == 2) {
-            MSImageRef libGestalt = MSGetImageByName("/usr/lib/libMobileGestalt.dylib");
-            if (libGestalt) {
-                void *MGCopyAnswerFn = MSFindSymbol(libGestalt, "_MGCopyAnswer");
-                const uint8_t *MGCopyAnswer_ptr = (const uint8_t *)MGCopyAnswer;
-                addr_t branch = find_branch64(MGCopyAnswer_ptr, 0, 8);
-                addr_t branch_offset = follow_branch64(MGCopyAnswer_ptr, branch);
-                MSHookFunction(((void *)((const uint8_t *)MGCopyAnswerFn + branch_offset)), (void *)new_MGCopyAnswer_internal, (void **)&orig_MGCopyAnswer_internal);
-            }
-            %init(InsetX);
-        } else if(bottomInsetVersion == 1) %init(bottomInset);
+        MSImageRef libGestalt = MSGetImageByName("/usr/lib/libMobileGestalt.dylib");
+        if (libGestalt) {
+             void *MGCopyAnswerFn = MSFindSymbol(libGestalt, "_MGCopyAnswer");
+            const uint8_t *MGCopyAnswer_ptr = (const uint8_t *)MGCopyAnswer;
+            addr_t bra nch = find_branch64(MGCopyAnswer_ptr, 0, 8);
+            addr_t branch_offset = follow_branch64(MGCopyAnswer_ptr, branch);
+            MSHookFunction(((void *)((const uint8_t *)MGCopyAnswerFn + branch_offset)), (void *)new_MGCopyAnswer_internal, (void **)&orig_MGCopyAnswer_internal);
+        }
+        %init(InsetX);
+
+        if (!wantsbottomInset) %init(removeinset);
         
         if(!wantsHomeBarSB) %init(hideHomeBarSB);
         if(!wantsHomeBarLS) %init(hideHomeBarLS);
 
-        if(wantsHomeBarSB || bottomInsetVersion > 0) {
+        if(wantsHomeBarSB || wantsbottomInset) {
             NSString* bundleIdentifier = [[NSBundle mainBundle] bundleIdentifier];
             if([bundleIdentifier isEqualToString:@"com.apple.camera"]) %init(CameraFix);
-            //else if([bundleIdentifier isEqualToString:@"com.google.ios.youtube"]) %init(YTBBFix);
+            else if([bundleIdentifier isEqualToString:@"com.google.ios.youtube"]) %init(YTBBFix);
         }
 
         if(wantsKeyboardDock) %init(KeyboardDock);
-        else if (bottomInsetVersion == 2) %init(ForceDefaultKeyboard);
+        else %init(ForceDefaultKeyboard);
         
         if(wantsRoundedAppSwitcher) %init(roundedDock);
         if(wantsReduceRows) %init(reduceRows);
@@ -806,14 +759,14 @@ static void initPrefs() {
         if(wantsRoundedCorners) %init(roundedCorners);
         if(wantsPIP) %init(PIP);
         if(wantsHideSBCC && statusBarStyle != 1) %init(HideSBCC);
+        if(wantsLSShortcuts) %init(addLSShortcuts);
+
         if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"12.0")) {
             if(wantsProudLock) %init(ProudLock);
+            if(wantsFaceIDIcon) %init(FaceIDIcon);
         } else {
             if(wantsSwipeUpToKillApps) %init(SwipeUpToKillApps);
         }
-
-        if(wantsLSShortcuts) %init(addLSShortcuts);
-        else %init(removeLSShortcuts);
 
         %init(_ungrouped);
     }
