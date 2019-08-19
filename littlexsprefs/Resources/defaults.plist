@@ -8,8 +8,8 @@
 	<false/>
 	<key>ProudLock</key>
 	<false/>
-	<key>bottomInsetVersion</key>
-	<integer>0</integer>
+	<key>BottomInset</key>
+	<<false/>
 	<key>ccGrabber</key>
 	<true/>
 	<key>homeBarLS</key>
@@ -34,5 +34,7 @@
 	<true/>
 	<key>lsShortcuts3DTouch</key>
 	<false/>
+	<key>FaceIDIcon</key>
+	<<false/>>
 </dict>
 </plist>

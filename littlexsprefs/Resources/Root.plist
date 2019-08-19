@@ -150,29 +150,15 @@
 		</dict>
 		<dict>
 			<key>cell</key>
-			<string>PSLinkListCell</string>
+			<string>PSSwitchCell</string>
 			<key>default</key>
-			<integer>0</integer>
+			<false/>
 			<key>defaults</key>
 			<string>com.binksalex.littlexsprefs</string>
 			<key>key</key>
-			<string>bottomInsetVersion</string>
+			<string>BottomInset</string>
 			<key>label</key>
 			<string>Bottom Inset</string>
-			<key>detail</key>
-			<string>PSListItemsController</string>
-			<key>validValues</key>
-			<array>
-				<integer>0</integer>
-				<integer>1</integer>
-				<integer>2</integer>
-			</array>
-			<key>validTitles</key>
-			<array>
-				<string>No bottom inset</string>
-				<string>Old bottom inset</string>
-				<string>New bottom inset</string>
-			</array>
 			<key>PostNotification</key>
 			<string>com.binksalex.littlexsprefs/prefsupdated</string>
 		</dict>
@@ -284,6 +270,20 @@
 			<key>defaults</key>
 			<string>com.binksalex.littlexsprefs</string>
 			<key>key</key>
+			<string>FaceIDIcon</string>
+			<key>label</key>
+			<string>FaceID Icon on lockscreen (iOS 12+)</string>
+			<key>PostNotification</key>
+			<string>com.binksalex.littlexsprefs/prefsupdated</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<false/>
+			<key>defaults</key>
+			<string>com.binksalex.littlexsprefs</string>
+			<key>key</key>
 			<string>swipeUpToKillApps</string>
 			<key>label</key>
 			<string>Swipe Up to Kill Apps (iOS 11)</string>
@@ -294,7 +294,7 @@
 			<key>cell</key>
 			<string>PSGroupCell</string>
 			<key>label</key>
-			<string>Lockscreen Shortcuts</string>
+			<string>Lockscreen Shortcuts (No Respring Required)</string>
 		</dict>
 		<dict>
 			<key>cell</key>

@@ -1,12 +1,11 @@
 Package: com.binksalex.littlexs
 Name: LittleXS
 Depends: mobilesubstrate
-Version: 2.3.0
+Version: 2.4.0
 Architecture: iphoneos-arm
 Description: LittleX revitalized for iOS 12.
-Maintainer: binksalex & Ryan Nair
-Author: binksalex & Ryan Nair
+Maintainer: Ryan Nair
+Author: Ryan Nair & binksalex 
 Section: Tweaks
 Replaces: com.binksalex.fluidify, com.vitataf.homegesture, com.VitaTaf.HomeGesture, com.ioscreatix.littlex
-Provides: com.binksalex.fluidify, com.ryannair05.poseidon, com.ryannair05.poseidon-rounded, com.vitataf.homegesture, com.VitaTaf.HomeGesture, com.ioscreatix.littlex, com.duraidabdul.neptune
-Conflicts: com.binksalex.fluidify, com.vitataf.homegesture, com.VitaTaf.HomeGesture, com.ioscreatix.littlex
+Provides: com.binksalex.fluidify, com.vitataf.homegesture, com.VitaTaf.HomeGesture, com.ioscreatix.littlex, com.duraidabdul.neptune
