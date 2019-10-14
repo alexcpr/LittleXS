@@ -5,7 +5,6 @@ ARCHS = arm64 arm64e
 BUNDLE_NAME = littlexsprefs
 littlexsprefs_FILES = LXSRootListController.m
 littlexsprefs_INSTALL_PATH = /Library/PreferenceBundles
-littlexsprefs_FRAMEWORKS = UIKit
 littlexsprefs_PRIVATE_FRAMEWORKS = Preferences
 
 include $(THEOS_MAKE_PATH)/bundle.mk

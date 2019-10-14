@@ -5,13 +5,13 @@
 	<key>HideSBCC</key>
 	<false/>
 	<key>PIP</key>
-	<false/>
+	<true/>
 	<key>ProudLock</key>
 	<false/>
-	<key>BottomInset</key>
-	<<false/>
+	<key>bottomInsetVersion</key>
+	<integer>0</integer>
 	<key>ccGrabber</key>
-	<true/>
+	<false/>
 	<key>homeBarLS</key>
 	<true/>
 	<key>homeBarSB</key>
@@ -34,7 +34,5 @@
 	<true/>
 	<key>lsShortcuts3DTouch</key>
 	<false/>
-	<key>FaceIDIcon</key>
-	<<false/>>
 </dict>
 </plist>

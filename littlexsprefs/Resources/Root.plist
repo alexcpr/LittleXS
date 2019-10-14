@@ -150,15 +150,29 @@
 		</dict>
 		<dict>
 			<key>cell</key>
-			<string>PSSwitchCell</string>
+			<string>PSLinkListCell</string>
 			<key>default</key>
-			<false/>
+			<integer>0</integer>
 			<key>defaults</key>
 			<string>com.binksalex.littlexsprefs</string>
 			<key>key</key>
-			<string>BottomInset</string>
+			<string>bottomInsetVersion</string>
 			<key>label</key>
 			<string>Bottom Inset</string>
+			<key>detail</key>
+			<string>PSListItemsController</string>
+			<key>validValues</key>
+			<array>
+				<integer>0</integer>
+				<integer>1</integer>
+				<integer>2</integer>
+			</array>
+			<key>validTitles</key>
+			<array>
+				<string>No bottom inset</string>
+				<string>Old bottom inset</string>
+				<string>New bottom inset</string>
+			</array>
 			<key>PostNotification</key>
 			<string>com.binksalex.littlexsprefs/prefsupdated</string>
 		</dict>
@@ -210,7 +224,7 @@
 			<key>cell</key>
 			<string>PSSwitchCell</string>
 			<key>default</key>
-			<true/>
+			<false/>
 			<key>defaults</key>
 			<string>com.binksalex.littlexsprefs</string>
 			<key>key</key>
@@ -238,7 +252,7 @@
 			<key>cell</key>
 			<string>PSSwitchCell</string>
 			<key>default</key>
-			<false/>
+			<true/>
 			<key>defaults</key>
 			<string>com.binksalex.littlexsprefs</string>
 			<key>key</key>
@@ -259,20 +273,6 @@
 			<string>ProudLock</string>
 			<key>label</key>
 			<string>FaceID Icon (iOS 12+)</string>
-			<key>PostNotification</key>
-			<string>com.binksalex.littlexsprefs/prefsupdated</string>
-		</dict>
-		<dict>
-			<key>cell</key>
-			<string>PSSwitchCell</string>
-			<key>default</key>
-			<false/>
-			<key>defaults</key>
-			<string>com.binksalex.littlexsprefs</string>
-			<key>key</key>
-			<string>FaceIDIcon</string>
-			<key>label</key>
-			<string>FaceID Icon on lockscreen (iOS 12+)</string>
 			<key>PostNotification</key>
 			<string>com.binksalex.littlexsprefs/prefsupdated</string>
 		</dict>

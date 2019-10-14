@@ -4,7 +4,7 @@ Make your older iPhone an X model by enabling iPhone X fluid gestures.
 
 ## Compatibility
 
-All pre-X devices running iOS 11-12.
+All devices running iOS 11-12.
 
 ## Features (All can be enabled/disabled in settings* :)
 * iPhone X fluid gestures.
@@ -38,10 +38,9 @@ Developers are free to modify and use the LittleXS source in their work in accor
 * VitaTaf | [HomeGesture](https://github.com/VitaTaf/HomeGesture)
 * Andrew Wiik | [LittleX](https://github.com/andrewwiik/LittleX)
 * duraidabdul | [Neptune](https://github.com/duraidabdul/Neptune)
-* NoisyFlake | [ModernDock](https://github.com/NoisyFlake/ModernDock)
-* smokin1337 | [FUGap](https://repo.packix.com/package/com.smokin1337.fugap/)
+* NoisyFlake | [ShortcutEnabler](https://github.com/NoisyFlake/ShortcutEnabler)
 * @Tonerk7 | [MGSpoof](https://github.com/Tonyk7/MGSpoof)
-* SniperGER | [ProudLock2](https://github.com/SniperGER/ProudLock2)
+* SniperGER |  [NotchSimulator](https://github.com/SniperGER/NotchSimulator)  &  [ProudLock2](https://github.com/SniperGER/ProudLock2) 
  
 
-*Every tweak drains some battery life no matter what it is. LittleXS drains less battery than most tweaks though
+*All tweaks drains battery life, which is something that can not be avoided; however, LittleXS drains less battery than similar tweaks.
