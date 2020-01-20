@@ -1,7 +1,7 @@
 Package: com.binksalex.littlexs
 Name: LittleXS
 Depends: mobilesubstrate, preferenceloader
-Version: 2.4.3
+Version: 2.4.4
 Architecture: iphoneos-arm
 Description: LittleX revitalized for iOS 12.
 Maintainer: Ryan Nair
