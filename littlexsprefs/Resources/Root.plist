@@ -76,6 +76,20 @@
 			<key>defaults</key>
 			<string>com.binksalex.littlexsprefs</string>
 			<key>key</key>
+			<string>disableHomeBarSwipes</string>
+			<key>label</key>
+			<string>Home Bar (Disable Swipes Left/Right/Down)</string>
+			<key>PostNotification</key>
+			<string>com.binksalex.littlexsprefs/prefsupdated</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.binksalex.littlexsprefs</string>
+			<key>key</key>
 			<string>keyboardDock</string>
 			<key>label</key>
 			<string>Larger Keyboard</string>
