@@ -3,7 +3,7 @@
 
 // Declaring our Variables that will be used throughout the program
 static NSInteger statusBarStyle, screenRoundness, appswitcherRoundness, bottomInsetVersion;
-static BOOL wantsHomeBarSB, wantsHomeBarLS, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduceRows, wantsCCGrabber, wantsOriginalButtons, wantsRoundedCorners, wantsPIP, wantsProudLock, wantsHideSBCC, wantsSwipeUpToKillApps, wantsLSShortcuts;
+static BOOL wantsHomeBarSB, wantsHomeBarLS, wantsKeyboardDock, wantsRoundedAppSwitcher, wantsReduceRows, wantsCCGrabber, wantsOriginalButtons, wantsRoundedCorners, wantsPIP, wantsProudLock, wantsHideSBCC, wantsSwipeUpToKillApps, wantsLSShortcuts, disableHomeBarSwipes;
 
 // Telling the iPhone that we want the fluid gestures
 %hook BSPlatform
@@ -447,6 +447,21 @@ CFPropertyListRef new_MGCopyAnswer_internal(CFStringRef property, uint32_t *outT
  %end		
  %end
 
+// Disable swipe left/right/down on homeBar
+%group DisableHomeBarSwipe
+%hook SBHomeGestureSettings
+- (void)setRecognizeAlongEdge:(BOOL)arg1 {
+ return;
+}
+%end
+
+%hook SBReachabilityManager
+- (void)_setupGestureRecognizers{
+ return;
+}
+%end
+%end
+
 // Enables PiP in video player.
 %group PIP
 extern "C" Boolean MGGetBoolAnswer(CFStringRef);
@@ -700,6 +715,7 @@ static void loadPrefs() {
         wantsSwipeUpToKillApps = [[prefs objectForKey:@"swipeUpToKillApps"] boolValue];
         wantsLSShortcuts = [[prefs objectForKey:@"lsShortcutsEnabled"] boolValue];
         require3DTouch = [[prefs objectForKey:@"lsShortcuts3DTouch"] boolValue];
+        disableHomeBarSwipes = [[prefs objectForKey:@"disableHomeBarSwipes"] boolValue];
 		settingsUpdated = YES;
 	}
 }
@@ -760,6 +776,7 @@ static void initPrefs() {
         %init(PIP);
         if(wantsHideSBCC && statusBarStyle != 1) %init(HideSBCC);
         if(wantsLSShortcuts) %init(addLSShortcuts);
+	if(disableHomeBarSwipes) %init(DisableHomeBarSwipe);
 
         if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"12.0")) {
             if(wantsProudLock) %init(ProudLock);
